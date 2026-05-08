@@ -1,18 +1,27 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { PuzzleVisualizer } from "@/app/PuzzleVisualizer";
 import { canonicalize, humanize, puzzleFilename } from "@/lib/canonicalize";
 import { isPuzzleError } from "@/lib/errors";
 import { fetchTexture } from "@/lib/fetchTexture";
-import { countPaletteCells, extractPaletteFromBlob } from "@/lib/palette";
+import {
+  countPaletteCells,
+  extractPaletteFromBlob,
+  type PaletteEntry,
+} from "@/lib/palette";
 
-interface DownloadState {
+export interface GeneratedPuzzle {
+  id: string;
   url: string;
   filename: string;
   itemLabel: string;
   sourceFilename: string;
   colorCount: number;
   opaqueCellCount: number;
+  textureUrl: string;
+  palette: PaletteEntry[];
+  imageData: ImageData;
 }
 
 const DEFAULT_STATUS = "Type an item name and generate a printable 4-page PDF.";
@@ -22,16 +31,17 @@ export default function Home() {
   const [maxColors, setMaxColors] = useState(8);
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [error, setError] = useState("");
-  const [download, setDownload] = useState<DownloadState | null>(null);
+  const [puzzle, setPuzzle] = useState<GeneratedPuzzle | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     return () => {
-      if (download) {
-        URL.revokeObjectURL(download.url);
+      if (puzzle) {
+        URL.revokeObjectURL(puzzle.url);
+        URL.revokeObjectURL(puzzle.textureUrl);
       }
     };
-  }, [download]);
+  }, [puzzle]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,22 +53,21 @@ export default function Home() {
       return;
     }
 
-    if (download) {
-      URL.revokeObjectURL(download.url);
-      setDownload(null);
-    }
-
-    let textureUrlToRevoke: string | null = null;
+    setPuzzle(null);
     setIsGenerating(true);
     setError("");
+
+    let textureUrl: string | null = null;
+    let pdfUrl: string | null = null;
+    let committed = false;
 
     try {
       setStatus("Fetching texture...");
       const texture = await fetchTexture(canonical);
-      textureUrlToRevoke = texture.blobUrl;
+      textureUrl = texture.blobUrl;
 
       setStatus("Extracting palette...");
-      const { palette, opaqueCellCount } = await extractPaletteFromBlob(
+      const { palette, opaqueCellCount, imageData } = await extractPaletteFromBlob(
         texture.blob,
         maxColors,
       );
@@ -74,28 +83,37 @@ export default function Home() {
       const pdfBuffer = new ArrayBuffer(pdfBytes.byteLength);
       new Uint8Array(pdfBuffer).set(pdfBytes);
       const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(pdfBlob);
+      pdfUrl = URL.createObjectURL(pdfBlob);
       const filename = puzzleFilename(texture.canonical);
       const cellCount = countPaletteCells(palette);
 
-      setDownload({
-        url,
+      setPuzzle({
+        id: `${texture.canonical}-${Date.now()}`,
+        url: pdfUrl,
         filename,
         itemLabel,
         sourceFilename: texture.sourceFilename,
         colorCount: palette.length,
         opaqueCellCount: cellCount,
+        textureUrl,
+        palette,
+        imageData,
       });
-      triggerDownload(url, filename);
+      committed = true;
       setStatus(
-        `Done - generated a 4-page PDF with ${opaqueCellCount} opaque cells across ${palette.length} colors.`,
+        `Preview ready - generated a 4-page PDF with ${opaqueCellCount} opaque cells across ${palette.length} colors. Confirm below to download.`,
       );
     } catch (caught) {
       setError(friendlyError(caught));
       setStatus("Could not generate the puzzle yet.");
     } finally {
-      if (textureUrlToRevoke) {
-        URL.revokeObjectURL(textureUrlToRevoke);
+      if (!committed) {
+        if (textureUrl) {
+          URL.revokeObjectURL(textureUrl);
+        }
+        if (pdfUrl) {
+          URL.revokeObjectURL(pdfUrl);
+        }
       }
       setIsGenerating(false);
     }
@@ -186,25 +204,15 @@ export default function Home() {
               {error ? (
                 <p className="mt-2 text-[var(--error)]">{error}</p>
               ) : null}
-              {download ? (
-                <div className="mt-3 border-t border-[var(--border)] pt-3">
-                  <a
-                    href={download.url}
-                    download={download.filename}
-                    className="font-semibold text-[var(--accent)] underline decoration-2 underline-offset-4"
-                  >
-                    Download {download.filename}
-                  </a>
-                  <p className="mt-2 text-[var(--muted)]">
-                    {download.itemLabel}: {download.opaqueCellCount} filled
-                    cells, {download.colorCount} colors, source{" "}
-                    {download.sourceFilename}.
-                  </p>
-                </div>
-              ) : null}
             </div>
           </form>
         </div>
+
+        <PuzzleVisualizer
+          key={puzzle?.id ?? "empty-preview"}
+          puzzle={puzzle}
+          onConfirm={triggerDownload}
+        />
 
         <footer className="border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
           Unofficial fan-made tool. Textures &copy; Mojang, sourced from
