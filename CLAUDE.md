@@ -44,6 +44,37 @@ proxy route. The user types a Minecraft item name, the browser fetches and
 decodes the 16x16 inventory icon, builds a 4-page PDF in the browser, previews
 the deliverables, and downloads the PDF locally only after confirmation.
 
+Last verified production state:
+
+```text
+Date: 2026-05-08
+Stable URL: https://davis-puzzle-web.vercel.app
+Git commit: 913b363 Add puzzle preview visualizer
+Vercel scope: paulmikulskis-projects
+Vercel project: davis-puzzle-web
+```
+
+## North Star And Value
+
+The north star is a classroom-safe utility, not a platform. Andrew should be
+able to open the URL on a Chromebook, type a Minecraft item, review the
+deliverables, confirm, and leave with a printable PDF. Nothing about the app
+should require setup, accounts, storage, configuration, or an explanation of
+software infrastructure.
+
+The therapeutic value is the reason the implementation is strict:
+
+- The 16x16 grid maps directly to Minecraft inventory textures and to the OT
+  worksheet format.
+- Coordinate labels train visual-spatial mapping and sustained attention.
+- The color-by-number version lowers cognitive load for younger or newer kids.
+- The advanced coordinate version keeps the same image but increases planning
+  and lookup demand.
+- The cover prompts support prediction, reflection, and task persistence.
+
+Treat layout parity, metadata, and predictable download behavior as product
+features. They are not incidental implementation details.
+
 ## Non-Negotiable Product Constraints
 
 - No auth.
@@ -146,6 +177,37 @@ public/
     simplified numbered version.
 13. User clicks Confirm download.
 14. Browser downloads `<canonical_lowercase>_puzzle.pdf`.
+
+## Runtime Mechanics And Side Effects
+
+The app has three important runtime phases:
+
+1. Fetch phase:
+   The browser calls `/api/wiki`, and the route handler makes a no-store
+   upstream request to `minecraft.wiki` with the project User-Agent. The server
+   passes bytes/HTML through but never stores them.
+
+2. Generate phase:
+   The browser creates a texture `Blob`, a texture object URL, a 16x16
+   `ImageData`, a palette, a PDF byte array, a PDF `Blob`, and a PDF object URL.
+   These are kept in React state as a `GeneratedPuzzle`.
+
+3. Confirm phase:
+   The browser creates a temporary anchor, points it at the PDF object URL, and
+   programmatically clicks it. That is the only intentional download side
+   effect.
+
+Object URL lifecycle matters:
+
+- Texture and PDF object URLs must remain alive while the preview is visible.
+- If generation fails, any partially created object URLs are revoked.
+- When a generated puzzle is replaced or the page unmounts, the previous object
+  URLs are revoked.
+- Do not synchronously revoke the PDF object URL immediately after Confirm;
+  Safari can abort the download.
+
+The server route's only side effect is outbound wiki traffic. It must never
+write files, cache payloads, log user activity, generate PDFs, or persist state.
 
 ## Wiki Proxy Contract
 
@@ -486,7 +548,7 @@ The page should stay simple and direct:
 Footer text in the app must read:
 
 ```text
-Unofficial fan-made tool. Textures Copyright Mojang, sourced from minecraft.wiki.
+Unofficial fan-made tool. Textures &copy; Mojang, sourced from minecraft.wiki.
 ```
 
 The JSX currently renders the copyright symbol with `&copy;`, so the visible
@@ -517,6 +579,67 @@ Color by number
 The summary step should include the Minecraft texture, a 16x16 color-map
 preview, and a short list of produced deliverables. Keep the stepper compact and
 work-focused.
+
+## Visualizer Contract
+
+Implementation file:
+
+```text
+app/PuzzleVisualizer.tsx
+```
+
+The visualizer is not a PDF renderer. It is a client-side preview of the same
+source data used to render the PDF. It should help the facilitator understand
+what will be downloaded before they commit to the file.
+
+Current generated state shape:
+
+```ts
+GeneratedPuzzle {
+  id: string
+  url: string
+  filename: string
+  itemLabel: string
+  sourceFilename: string
+  colorCount: number
+  opaqueCellCount: number
+  textureUrl: string
+  palette: PaletteEntry[]
+  imageData: ImageData
+}
+```
+
+Important details:
+
+- `id` is used as a React key to reset the stepper when a new puzzle is
+  generated.
+- `url` is the PDF object URL used by Confirm download.
+- `textureUrl` is the image object URL shown in the summary panel.
+- `imageData` is currently retained for future visualizer work even though the
+  present preview renders from the palette.
+- The summary uses a plain `img` because the source is a browser object URL;
+  Next Image is not appropriate for that local Blob.
+- The preview grids render HTML/CSS approximations, not PDF pages. The PDF
+  contract still lives in `lib/pdf/*`.
+
+Stepper names and intent:
+
+```text
+Summary
+  Texture, color-map preview, and produced deliverables.
+
+Answer key
+  Completed color grid plus coordinate legend.
+
+Coordinate coloring
+  Blank advanced grid plus coordinate legend.
+
+Color by number
+  Numbered student grid plus numeric color key.
+```
+
+Do not make Generate download. Do not hide Confirm below an ambiguous link.
+Confirm is the deliberate point where the file leaves the browser.
 
 ## Friendly Error Policy
 
@@ -711,6 +834,17 @@ Playwright production check should generate and save:
 
 ```text
 /tmp/prod_cooked_salmon_puzzle.pdf
+```
+
+The production smoke should also verify that Generate does not download before
+Confirm:
+
+```text
+Generate -> preview appears -> no download event
+Next -> Answer key
+Next -> Coordinate coloring
+Next -> Color by number
+Confirm download -> cooked_salmon_puzzle.pdf download event
 ```
 
 Then run:
