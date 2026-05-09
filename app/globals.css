@@ -83,3 +83,50 @@ textarea {
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   }
 }
+
+.davis-filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.davis-filter-row {
+  scrollbar-width: none;
+}
+
+.davis-touch-only {
+  display: none;
+}
+
+.davis-pointer-only {
+  display: inline;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .davis-touch-only {
+    display: inline;
+  }
+  .davis-pointer-only {
+    display: none;
+  }
+}
+
+@keyframes davisSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.davis-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: davisSpin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .davis-spinner {
+    animation: none;
+  }
+}

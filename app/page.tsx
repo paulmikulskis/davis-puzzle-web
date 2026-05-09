@@ -1,10 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { CatalogBrowser } from "@/app/CatalogBrowser";
+import {
+  CatalogBrowser,
+  type CatalogBrowserHandle,
+} from "@/app/CatalogBrowser";
 import { PuzzleVisualizer } from "@/app/PuzzleVisualizer";
 import { canonicalize, humanize, puzzleFilename } from "@/lib/canonicalize";
-import { isPuzzleError } from "@/lib/errors";
+import { isPuzzleError, type PuzzleErrorCode } from "@/lib/errors";
 import { fetchTexture } from "@/lib/fetchTexture";
 import {
   DEFAULT_LABEL_OPTIONS,
@@ -34,7 +37,10 @@ export default function Home() {
   const [itemName, setItemName] = useState("apple");
   const [maxColors, setMaxColors] = useState(8);
   const [status, setStatus] = useState(DEFAULT_STATUS);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<{
+    message: string;
+    code?: PuzzleErrorCode;
+  } | null>(null);
   const [puzzle, setPuzzle] = useState<GeneratedPuzzle | null>(null);
   const [labelOptions, setLabelOptions] = useState<LabelOptions>(
     DEFAULT_LABEL_OPTIONS,
@@ -42,10 +48,11 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRebuildingPdf, setIsRebuildingPdf] = useState(false);
   const generateButtonRef = useRef<HTMLButtonElement | null>(null);
+  const catalogRef = useRef<CatalogBrowserHandle | null>(null);
 
   function handleCatalogPick(canonicalName: string, displayName: string) {
     setItemName(displayName);
-    setError("");
+    setError(null);
     if (typeof window !== "undefined") {
       window.requestAnimationFrame(() => {
         generateButtonRef.current?.scrollIntoView({
@@ -118,14 +125,17 @@ export default function Home() {
 
     const canonical = canonicalize(itemName);
     if (!canonical) {
-      setError("Type a Minecraft item name first.");
+      setError({
+        message: "Type a Minecraft item name first.",
+        code: "bad-input",
+      });
       setStatus(DEFAULT_STATUS);
       return;
     }
 
     setPuzzle(null);
     setIsGenerating(true);
-    setError("");
+    setError(null);
 
     let textureUrl: string | null = null;
     let pdfUrl: string | null = null;
@@ -231,7 +241,7 @@ export default function Home() {
                   placeholder="cooked salmon"
                   autoComplete="off"
                   spellCheck={false}
-                  className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:bg-slate-100"
+                  className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition hover:border-[var(--heading)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
               </div>
 
@@ -265,9 +275,19 @@ export default function Home() {
                 ref={generateButtonRef}
                 type="submit"
                 disabled={isGenerating}
-                className="w-full rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
               >
-                {isGenerating ? "Generating..." : "Generate"}
+                {isGenerating ? (
+                  <>
+                    <span
+                      className="davis-spinner"
+                      aria-hidden="true"
+                    />
+                    <span>Generating…</span>
+                  </>
+                ) : (
+                  "Generate"
+                )}
               </button>
             </div>
 
@@ -277,13 +297,30 @@ export default function Home() {
             >
               <p className="font-medium text-[var(--heading)]">{status}</p>
               {error ? (
-                <p className="mt-2 text-[var(--error)]">{error}</p>
+                <p className="mt-2 text-[var(--error)]">
+                  {error.message}
+                  {error.code === "not-found" || error.code === "decode" ? (
+                    <>
+                      {" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          catalogRef.current?.openAndFocus(itemName.trim());
+                        }}
+                        className="cursor-pointer font-semibold text-[var(--accent)] underline-offset-2 hover:underline"
+                      >
+                        Browse items
+                      </button>
+                      <span> below.</span>
+                    </>
+                  ) : null}
+                </p>
               ) : null}
             </div>
           </form>
         </div>
 
-        <CatalogBrowser onPick={handleCatalogPick} />
+        <CatalogBrowser ref={catalogRef} onPick={handleCatalogPick} />
 
         <PuzzleVisualizer
           key={puzzle?.id ?? "empty-preview"}
@@ -313,22 +350,41 @@ function triggerDownload(url: string, filename: string): void {
   anchor.remove();
 }
 
-function friendlyError(error: unknown): string {
+function friendlyError(error: unknown): {
+  message: string;
+  code?: PuzzleErrorCode;
+} {
   if (isPuzzleError(error)) {
     if (error.code === "not-found") {
-      return "Couldn't find that item. Check the spelling or try a different Minecraft item.";
+      return {
+        code: "not-found",
+        message:
+          "Couldn't find that item. Check the spelling or browse the catalog.",
+      };
     }
     if (error.code === "transparent") {
-      return "This icon has no opaque pixels. Try a different item.";
+      return {
+        code: "transparent",
+        message: "This icon has no opaque pixels. Try a different item.",
+      };
     }
     if (error.code === "network") {
-      return "Couldn't reach the wiki. Try again in a moment.";
+      return {
+        code: "network",
+        message: "Couldn't reach the wiki. Try again in a moment.",
+      };
     }
     if (error.code === "bad-input") {
-      return error.message;
+      return { code: "bad-input", message: error.message };
     }
-    return "Couldn't decode that texture. Try a different item.";
+    return {
+      code: "decode",
+      message: "Couldn't decode that texture. Try a different item.",
+    };
   }
 
-  return "Something went wrong while generating the worksheet. Try again in a moment.";
+  return {
+    message:
+      "Something went wrong while generating the worksheet. Try again in a moment.",
+  };
 }

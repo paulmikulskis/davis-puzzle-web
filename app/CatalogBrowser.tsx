@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DifficultyBadge } from "@/app/DifficultyBadge";
 import {
   type CatalogCategory,
@@ -10,6 +17,10 @@ import {
   isCatalogFile,
 } from "@/lib/catalog";
 import { type DifficultyBucket } from "@/lib/difficulty";
+
+export interface CatalogBrowserHandle {
+  openAndFocus: (initialQuery?: string) => void;
+}
 
 interface CatalogBrowserProps {
   onPick: (canonicalName: string, displayName: string) => void;
@@ -30,7 +41,10 @@ type LoadState =
 
 const STORAGE_KEY = "davis.catalog.open";
 
-export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
+export const CatalogBrowser = forwardRef<
+  CatalogBrowserHandle,
+  CatalogBrowserProps
+>(function CatalogBrowser({ onPick }, ref) {
   const [open, setOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -44,6 +58,33 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
     Set<DifficultyBucket>
   >(() => new Set());
   const fetchStarted = useRef(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openAndFocus: (initialQuery?: string) => {
+        setOpen(true);
+        if (typeof initialQuery === "string") {
+          setSearch(initialQuery);
+        }
+        if (typeof window !== "undefined") {
+          window.requestAnimationFrame(() => {
+            sectionRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+            window.setTimeout(() => {
+              searchInputRef.current?.focus();
+              searchInputRef.current?.select();
+            }, 60);
+          });
+        }
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -131,13 +172,16 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
   const totalActive = activeCategories.size + activeDifficulties.size;
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-white shadow-sm">
+    <section
+      ref={sectionRef}
+      className="rounded-lg border border-[var(--border)] bg-white shadow-sm"
+    >
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="catalog-panel"
-        className="flex w-full items-center justify-between gap-3 rounded-lg px-5 py-4 text-left transition hover:bg-[var(--panel)]"
+        className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-5 py-4 text-left transition hover:bg-[var(--panel)]"
       >
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
@@ -149,7 +193,7 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
               : "Pick from a curated catalog instead of typing."}
           </p>
         </div>
-        <span className="shrink-0 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--heading)]">
+        <span className="shrink-0 rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[var(--heading)] transition group-hover:border-[var(--accent)] group-hover:bg-[var(--panel)]">
           {open ? "Hide" : "Open"}
         </span>
       </button>
@@ -162,26 +206,27 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
+                ref={searchInputRef}
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search items..."
                 aria-label="Search catalog"
-                className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] sm:max-w-sm"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition hover:border-[var(--heading)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] sm:max-w-sm"
               />
               {totalActive > 0 ? (
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="self-start rounded-md border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)]"
+                  className="cursor-pointer self-start rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] hover:bg-[var(--panel)]"
                 >
                   Clear filters ({totalActive})
                 </button>
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+            <div className="davis-filter-row -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+              <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                 Difficulty
               </span>
               {DIFFICULTY_OPTIONS.map((bucket) => {
@@ -192,10 +237,10 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
                     type="button"
                     onClick={() => toggleDifficulty(bucket)}
                     aria-pressed={active}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                    className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
                       active
                         ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                        : "border-[var(--border)] bg-white text-[var(--foreground)] hover:border-[var(--accent)]"
+                        : "border-[var(--border)] bg-white text-[var(--foreground)] hover:border-[var(--accent)] hover:bg-[var(--panel)]"
                     }`}
                   >
                     {DIFFICULTY_LABEL[bucket]}
@@ -205,8 +250,8 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
             </div>
 
             {allCategories.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+              <div className="davis-filter-row -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                   Category
                 </span>
                 {allCategories.map((category) => {
@@ -217,10 +262,10 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
                       type="button"
                       onClick={() => toggleCategory(category)}
                       aria-pressed={active}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                      className={`shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition ${
                         active
                           ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                          : "border-[var(--border)] bg-white text-[var(--foreground)] hover:border-[var(--accent)]"
+                          : "border-[var(--border)] bg-white text-[var(--foreground)] hover:border-[var(--accent)] hover:bg-[var(--panel)]"
                       }`}
                     >
                       {CATEGORY_LABELS[category] ?? category}
@@ -233,14 +278,39 @@ export function CatalogBrowser({ onPick }: CatalogBrowserProps) {
             <CatalogBody
               state={state}
               filteredItems={filteredItems}
-              onPick={onPick}
+              onPick={(canonical, display) => {
+                onPick(canonical, display);
+                setOpen(false);
+              }}
             />
+
+            {state.status === "ready" ? (
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    if (typeof window !== "undefined") {
+                      window.requestAnimationFrame(() => {
+                        sectionRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      });
+                    }
+                  }}
+                  className="cursor-pointer rounded-md border border-[var(--border)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] hover:bg-[var(--panel)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-soft)]"
+                >
+                  Hide catalog
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
     </section>
   );
-}
+});
 
 function CatalogBody({
   state,
