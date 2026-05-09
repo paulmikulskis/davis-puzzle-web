@@ -4,10 +4,12 @@ import {
   rgb as pdfRgb,
 } from "pdf-lib";
 import {
-  COLUMNS,
+  DEFAULT_LABEL_OPTIONS,
   GRID_N,
-  ROWS,
   cellLabelToPoint,
+  displayColumn,
+  displayRow,
+  type LabelOptions,
   type RGB,
 } from "@/lib/palette";
 
@@ -34,6 +36,7 @@ export interface GridOptions {
   showLabels?: boolean;
   labelSize?: number;
   lineWidth?: number;
+  labelOptions?: LabelOptions;
 }
 
 const BLACK = pdfRgb(0, 0, 0);
@@ -48,6 +51,7 @@ export function drawGrid(ctx: PdfContext, options: GridOptions): void {
     showLabels = true,
     labelSize = 8.0,
     lineWidth = 0.5,
+    labelOptions = DEFAULT_LABEL_OPTIONS,
   } = options;
   const gridW = GRID_N * cell;
   const bottom = gy - gridW;
@@ -99,7 +103,7 @@ export function drawGrid(ctx: PdfContext, options: GridOptions): void {
     for (let x = 0; x < GRID_N; x += 1) {
       centerText(
         ctx,
-        COLUMNS[x],
+        displayColumn(x, labelOptions),
         gx + (x + 0.5) * cell,
         gy + 2,
         ctx.fonts.bold,
@@ -110,7 +114,7 @@ export function drawGrid(ctx: PdfContext, options: GridOptions): void {
     for (let y = 0; y < GRID_N; y += 1) {
       rightText(
         ctx,
-        ROWS[y],
+        displayRow(y, labelOptions),
         gx - 2,
         gy - (y + 0.75) * cell,
         ctx.fonts.bold,

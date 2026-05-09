@@ -1,5 +1,9 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { type PaletteEntry } from "@/lib/palette";
+import {
+  DEFAULT_LABEL_OPTIONS,
+  type LabelOptions,
+  type PaletteEntry,
+} from "@/lib/palette";
 import { renderColorByNumberPage } from "@/lib/pdf/colorByNumber";
 import { renderCoordinatePage } from "@/lib/pdf/coordinate";
 import { renderCoverPage } from "@/lib/pdf/cover";
@@ -10,9 +14,11 @@ export interface BuildPdfOptions {
   itemLabel: string;
   sourceFilename: string;
   palette: PaletteEntry[];
+  labelOptions?: LabelOptions;
 }
 
 export async function buildPdf(options: BuildPdfOptions): Promise<Uint8Array> {
+  const labelOptions = options.labelOptions ?? DEFAULT_LABEL_OPTIONS;
   const pdfDoc = await PDFDocument.create();
   pdfDoc.setTitle(`${options.itemLabel} - Minecraft Pixel Art Puzzle`);
   pdfDoc.setAuthor("Davis Puzzle Generator");
@@ -25,10 +31,23 @@ export async function buildPdf(options: BuildPdfOptions): Promise<Uint8Array> {
   };
 
   const renderers = [
-    (ctx: PdfContext) => renderCoverPage(ctx, options.itemLabel),
-    (ctx: PdfContext) => renderReferencePage(ctx, options.itemLabel, options.palette),
-    (ctx: PdfContext) => renderColorByNumberPage(ctx, options.itemLabel, options.palette),
-    (ctx: PdfContext) => renderCoordinatePage(ctx, options.itemLabel, options.palette),
+    (ctx: PdfContext) => renderCoverPage(ctx, options.itemLabel, labelOptions),
+    (ctx: PdfContext) =>
+      renderReferencePage(ctx, options.itemLabel, options.palette, labelOptions),
+    (ctx: PdfContext) =>
+      renderColorByNumberPage(
+        ctx,
+        options.itemLabel,
+        options.palette,
+        labelOptions,
+      ),
+    (ctx: PdfContext) =>
+      renderCoordinatePage(
+        ctx,
+        options.itemLabel,
+        options.palette,
+        labelOptions,
+      ),
   ];
 
   for (const render of renderers) {

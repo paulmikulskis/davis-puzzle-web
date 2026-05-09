@@ -1,4 +1,10 @@
-import { GRID_N, type PaletteEntry, type RGB } from "@/lib/palette";
+import {
+  GRID_N,
+  transformLabel,
+  type LabelOptions,
+  type PaletteEntry,
+  type RGB,
+} from "@/lib/palette";
 import {
   PAGE_H,
   PAGE_W,
@@ -14,6 +20,7 @@ export function renderReferencePage(
   ctx: PdfContext,
   itemLabel: string,
   palette: PaletteEntry[],
+  labelOptions: LabelOptions,
 ): void {
   drawTitle(ctx, `${itemLabel} (Hard) \u2014 Reference`);
 
@@ -28,7 +35,7 @@ export function renderReferencePage(
   const gridW = GRID_N * cell;
   const gx = 60;
   const gy = PAGE_H - 100;
-  drawGrid(ctx, { gx, gy, cell, fills, labelSize: 8.0 });
+  drawGrid(ctx, { gx, gy, cell, fills, labelSize: 8.0, labelOptions });
 
   const swatchSize = 20.0;
   const textIndent = 8.0;
@@ -41,7 +48,8 @@ export function renderReferencePage(
   let cy = gy - 14;
   const interGap = 6.0;
   for (const entry of palette) {
-    const wrapped = wrapCoordsToWidth(ctx, entry.cells, keyTextMaxW);
+    const displayCells = entry.cells.map((c) => transformLabel(c, labelOptions));
+    const wrapped = wrapCoordsToWidth(ctx, displayCells, keyTextMaxW);
     cy =
       drawKeyEntry(ctx, keyX, cy, entry.rgb, wrapped, {
         swatchSize,

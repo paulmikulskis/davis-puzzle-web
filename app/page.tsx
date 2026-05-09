@@ -7,8 +7,10 @@ import { canonicalize, humanize, puzzleFilename } from "@/lib/canonicalize";
 import { isPuzzleError } from "@/lib/errors";
 import { fetchTexture } from "@/lib/fetchTexture";
 import {
+  DEFAULT_LABEL_OPTIONS,
   countPaletteCells,
   extractPaletteFromBlob,
+  type LabelOptions,
   type PaletteEntry,
 } from "@/lib/palette";
 
@@ -23,6 +25,7 @@ export interface GeneratedPuzzle {
   textureUrl: string;
   palette: PaletteEntry[];
   imageData: ImageData;
+  labelOptions: LabelOptions;
 }
 
 const DEFAULT_STATUS = "Type an item name and generate a printable 4-page PDF.";
@@ -33,7 +36,11 @@ export default function Home() {
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [error, setError] = useState("");
   const [puzzle, setPuzzle] = useState<GeneratedPuzzle | null>(null);
+  const [labelOptions, setLabelOptions] = useState<LabelOptions>(
+    DEFAULT_LABEL_OPTIONS,
+  );
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRebuildingPdf, setIsRebuildingPdf] = useState(false);
   const generateButtonRef = useRef<HTMLButtonElement | null>(null);
 
   function handleCatalogPick(canonicalName: string, displayName: string) {
@@ -58,6 +65,53 @@ export default function Home() {
       }
     };
   }, [puzzle]);
+
+  useEffect(() => {
+    if (!puzzle) return;
+    if (
+      puzzle.labelOptions.columnsCase === labelOptions.columnsCase &&
+      puzzle.labelOptions.rowsCase === labelOptions.rowsCase
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const handle = window.setTimeout(async () => {
+      setIsRebuildingPdf(true);
+      try {
+        const { buildPdf } = await import("@/lib/pdf");
+        const pdfBytes = await buildPdf({
+          itemLabel: puzzle.itemLabel,
+          sourceFilename: puzzle.sourceFilename,
+          palette: puzzle.palette,
+          labelOptions,
+        });
+        if (cancelled) return;
+        const buffer = new ArrayBuffer(pdfBytes.byteLength);
+        new Uint8Array(buffer).set(pdfBytes);
+        const blob = new Blob([buffer], { type: "application/pdf" });
+        const nextUrl = URL.createObjectURL(blob);
+        const previousUrl = puzzle.url;
+        setPuzzle((current) =>
+          current && current.id === puzzle.id
+            ? { ...current, url: nextUrl, labelOptions }
+            : current,
+        );
+        URL.revokeObjectURL(previousUrl);
+      } catch {
+        // Keep the previous PDF; the preview will still reflect the new labels.
+      } finally {
+        if (!cancelled) {
+          setIsRebuildingPdf(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [labelOptions, puzzle]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,6 +149,7 @@ export default function Home() {
         itemLabel,
         sourceFilename: texture.sourceFilename,
         palette,
+        labelOptions,
       });
       const pdfBuffer = new ArrayBuffer(pdfBytes.byteLength);
       new Uint8Array(pdfBuffer).set(pdfBytes);
@@ -114,6 +169,7 @@ export default function Home() {
         textureUrl,
         palette,
         imageData,
+        labelOptions,
       });
       committed = true;
       setStatus(
@@ -233,6 +289,9 @@ export default function Home() {
           key={puzzle?.id ?? "empty-preview"}
           puzzle={puzzle}
           onConfirm={triggerDownload}
+          labelOptions={labelOptions}
+          onLabelOptionsChange={setLabelOptions}
+          isRebuildingPdf={isRebuildingPdf}
         />
 
         <footer className="mt-auto border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">

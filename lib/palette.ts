@@ -7,6 +7,18 @@ export const ALPHA_THRESHOLD = 32;
 
 export type RGB = [number, number, number];
 
+export type AxisCase = "upper" | "lower";
+
+export interface LabelOptions {
+  columnsCase: AxisCase;
+  rowsCase: AxisCase;
+}
+
+export const DEFAULT_LABEL_OPTIONS: LabelOptions = {
+  columnsCase: "upper",
+  rowsCase: "lower",
+};
+
 export interface PaletteEntry {
   rgb: RGB;
   cells: string[];
@@ -125,6 +137,34 @@ export function cellLabelToPoint(label: string): { x: number; y: number } {
 
 export function compareCellLabels(a: string, b: string): number {
   return ROWS.indexOf(a[1]) - ROWS.indexOf(b[1]) || COLUMNS.indexOf(a[0]) - COLUMNS.indexOf(b[0]);
+}
+
+export function displayColumn(index: number, options: LabelOptions): string {
+  const ch = COLUMNS[index];
+  return options.columnsCase === "upper" ? ch : ch.toLowerCase();
+}
+
+export function displayRow(index: number, options: LabelOptions): string {
+  const ch = ROWS[index];
+  return options.rowsCase === "upper" ? ch.toUpperCase() : ch;
+}
+
+export function transformLabel(
+  canonical: string,
+  options: LabelOptions,
+): string {
+  const col = canonical[0];
+  const row = canonical[1];
+  const colOut = options.columnsCase === "upper" ? col : col.toLowerCase();
+  const rowOut = options.rowsCase === "upper" ? row.toUpperCase() : row;
+  return colOut + rowOut;
+}
+
+export function isDefaultLabelOptions(options: LabelOptions): boolean {
+  return (
+    options.columnsCase === DEFAULT_LABEL_OPTIONS.columnsCase &&
+    options.rowsCase === DEFAULT_LABEL_OPTIONS.rowsCase
+  );
 }
 
 export function countPaletteCells(palette: PaletteEntry[]): number {

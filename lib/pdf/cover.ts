@@ -1,4 +1,4 @@
-import { GRID_N } from "@/lib/palette";
+import { GRID_N, type LabelOptions } from "@/lib/palette";
 import {
   PAGE_H,
   PAGE_W,
@@ -13,14 +13,18 @@ import {
   type PdfContext,
 } from "@/lib/pdf/grid";
 
-export function renderCoverPage(ctx: PdfContext, itemLabel: string): void {
+export function renderCoverPage(
+  ctx: PdfContext,
+  itemLabel: string,
+  labelOptions: LabelOptions,
+): void {
   drawTitle(ctx, "Minecraft Pixel Art Puzzles");
 
   const cell = 17.0;
   const gridW = GRID_N * cell;
   const gx = 60;
   const gy = PAGE_H - 110;
-  drawGrid(ctx, { gx, gy, cell, labelSize: 8.0 });
+  drawGrid(ctx, { gx, gy, cell, labelSize: 8.0, labelOptions });
 
   const rightColW = 220.0;
   const rx = gx + gridW + 24;

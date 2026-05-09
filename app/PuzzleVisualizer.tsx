@@ -5,10 +5,13 @@ import { DifficultyBadge } from "@/app/DifficultyBadge";
 import { type GeneratedPuzzle } from "@/app/page";
 import { computeDifficulty } from "@/lib/difficulty";
 import {
-  COLUMNS,
   GRID_N,
-  ROWS,
   cellLabel,
+  displayColumn,
+  displayRow,
+  isDefaultLabelOptions,
+  transformLabel,
+  type LabelOptions,
   type PaletteEntry,
   type RGB,
 } from "@/lib/palette";
@@ -16,6 +19,9 @@ import {
 interface PuzzleVisualizerProps {
   puzzle: GeneratedPuzzle | null;
   onConfirm: (url: string, filename: string) => void;
+  labelOptions: LabelOptions;
+  onLabelOptionsChange: (next: LabelOptions) => void;
+  isRebuildingPdf: boolean;
 }
 
 const slides = [
@@ -24,6 +30,8 @@ const slides = [
   "Coordinate coloring",
   "Color by number",
 ];
+
+const HIGHLIGHT_SLIDES = new Set([1, 2, 3]);
 
 type EmailSendState =
   | { status: "idle" }
@@ -34,6 +42,9 @@ type EmailSendState =
 export function PuzzleVisualizer({
   puzzle,
   onConfirm,
+  labelOptions,
+  onLabelOptionsChange,
+  isRebuildingPdf,
 }: PuzzleVisualizerProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -42,6 +53,25 @@ export function PuzzleVisualizer({
   const [emailState, setEmailState] = useState<EmailSendState>({
     status: "idle",
   });
+  const [pinnedSwatch, setPinnedSwatch] = useState<number | null>(null);
+  const [hoveredSwatch, setHoveredSwatch] = useState<number | null>(null);
+  const slideKey = `${activeSlide}-${puzzle?.id ?? ""}`;
+  const [lastSlideKey, setLastSlideKey] = useState(slideKey);
+  if (lastSlideKey !== slideKey) {
+    setLastSlideKey(slideKey);
+    setPinnedSwatch(null);
+    setHoveredSwatch(null);
+  }
+
+  const activeSwatchIndex =
+    pinnedSwatch !== null ? pinnedSwatch : hoveredSwatch;
+  const showHighlight = HIGHLIGHT_SLIDES.has(activeSlide);
+  const activeCells = useMemo(() => {
+    if (!showHighlight || !puzzle || activeSwatchIndex === null) return null;
+    const entry = puzzle.palette[activeSwatchIndex];
+    if (!entry) return null;
+    return new Set(entry.cells);
+  }, [activeSwatchIndex, puzzle, showHighlight]);
 
   if (!puzzle) {
     return (
@@ -256,6 +286,12 @@ export function PuzzleVisualizer({
         </div>
       ) : null}
 
+      <LabelStyleControls
+        labelOptions={labelOptions}
+        onChange={onLabelOptionsChange}
+        isRebuildingPdf={isRebuildingPdf}
+      />
+
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {slides.map((slide, index) => (
@@ -294,16 +330,74 @@ export function PuzzleVisualizer({
       </div>
 
       <div key={activeSlide} className="davis-step-enter mt-5 min-h-[420px]">
-        {activeSlide === 0 ? <SummarySlide puzzle={puzzle} /> : null}
-        {activeSlide === 1 ? <AnswerKeySlide puzzle={puzzle} /> : null}
-        {activeSlide === 2 ? <CoordinateSlide puzzle={puzzle} /> : null}
-        {activeSlide === 3 ? <NumberedSlide puzzle={puzzle} /> : null}
+        {activeSlide === 0 ? (
+          <SummarySlide puzzle={puzzle} labelOptions={labelOptions} />
+        ) : null}
+        {activeSlide === 1 ? (
+          <AnswerKeySlide
+            puzzle={puzzle}
+            labelOptions={labelOptions}
+            activeCells={activeCells}
+            activeSwatchIndex={activeSwatchIndex}
+            pinnedSwatch={pinnedSwatch}
+            onSwatchHover={setHoveredSwatch}
+            onSwatchToggle={(index) =>
+              setPinnedSwatch((current) => (current === index ? null : index))
+            }
+            onClearPin={() => setPinnedSwatch(null)}
+          />
+        ) : null}
+        {activeSlide === 2 ? (
+          <CoordinateSlide
+            puzzle={puzzle}
+            labelOptions={labelOptions}
+            activeCells={activeCells}
+            activeSwatchIndex={activeSwatchIndex}
+            pinnedSwatch={pinnedSwatch}
+            onSwatchHover={setHoveredSwatch}
+            onSwatchToggle={(index) =>
+              setPinnedSwatch((current) => (current === index ? null : index))
+            }
+            onClearPin={() => setPinnedSwatch(null)}
+          />
+        ) : null}
+        {activeSlide === 3 ? (
+          <NumberedSlide
+            puzzle={puzzle}
+            labelOptions={labelOptions}
+            activeCells={activeCells}
+            activeSwatchIndex={activeSwatchIndex}
+            pinnedSwatch={pinnedSwatch}
+            onSwatchHover={setHoveredSwatch}
+            onSwatchToggle={(index) =>
+              setPinnedSwatch((current) => (current === index ? null : index))
+            }
+            onClearPin={() => setPinnedSwatch(null)}
+          />
+        ) : null}
       </div>
     </section>
   );
 }
 
-function SummarySlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
+interface InteractiveSlideProps {
+  puzzle: GeneratedPuzzle;
+  labelOptions: LabelOptions;
+  activeCells: Set<string> | null;
+  activeSwatchIndex: number | null;
+  pinnedSwatch: number | null;
+  onSwatchHover: (index: number | null) => void;
+  onSwatchToggle: (index: number) => void;
+  onClearPin: () => void;
+}
+
+function SummarySlide({
+  puzzle,
+  labelOptions,
+}: {
+  puzzle: GeneratedPuzzle;
+  labelOptions: LabelOptions;
+}) {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -322,6 +416,7 @@ function SummarySlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
           <PixelGrid
             palette={puzzle.palette}
             mode="color"
+            labelOptions={labelOptions}
             className="mx-auto max-w-[220px]"
           />
         </PreviewPanel>
@@ -347,13 +442,28 @@ function SummarySlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
         </ul>
         <div className="mt-5 grid grid-cols-3 gap-2">
           <MiniDeliverable title="Key">
-            <PixelGrid palette={puzzle.palette} mode="color" compact />
+            <PixelGrid
+              palette={puzzle.palette}
+              mode="color"
+              labelOptions={labelOptions}
+              compact
+            />
           </MiniDeliverable>
           <MiniDeliverable title="Advanced">
-            <PixelGrid palette={puzzle.palette} mode="blank" compact />
+            <PixelGrid
+              palette={puzzle.palette}
+              mode="blank"
+              labelOptions={labelOptions}
+              compact
+            />
           </MiniDeliverable>
           <MiniDeliverable title="Numbered">
-            <PixelGrid palette={puzzle.palette} mode="number" compact />
+            <PixelGrid
+              palette={puzzle.palette}
+              mode="number"
+              labelOptions={labelOptions}
+              compact
+            />
           </MiniDeliverable>
         </div>
       </div>
@@ -361,35 +471,80 @@ function SummarySlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
   );
 }
 
-function AnswerKeySlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
+function AnswerKeySlide(props: InteractiveSlideProps) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
       <PreviewPanel title="Facilitator answer key">
-        <PixelGrid palette={puzzle.palette} mode="color" withAxes />
+        <PixelGrid
+          palette={props.puzzle.palette}
+          mode="color"
+          labelOptions={props.labelOptions}
+          activeCells={props.activeCells}
+          withAxes
+        />
       </PreviewPanel>
-      <PaletteLegend palette={puzzle.palette} mode="coordinates" />
+      <PaletteLegend
+        palette={props.puzzle.palette}
+        mode="coordinates"
+        labelOptions={props.labelOptions}
+        activeSwatchIndex={props.activeSwatchIndex}
+        pinnedSwatch={props.pinnedSwatch}
+        onSwatchHover={props.onSwatchHover}
+        onSwatchToggle={props.onSwatchToggle}
+        onClearPin={props.onClearPin}
+      />
     </div>
   );
 }
 
-function CoordinateSlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
+function CoordinateSlide(props: InteractiveSlideProps) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
       <PreviewPanel title="Advanced coordinate-coloring worksheet">
-        <PixelGrid palette={puzzle.palette} mode="blank" withAxes />
+        <PixelGrid
+          palette={props.puzzle.palette}
+          mode="blank"
+          labelOptions={props.labelOptions}
+          activeCells={props.activeCells}
+          withAxes
+        />
       </PreviewPanel>
-      <PaletteLegend palette={puzzle.palette} mode="coordinates" />
+      <PaletteLegend
+        palette={props.puzzle.palette}
+        mode="coordinates"
+        labelOptions={props.labelOptions}
+        activeSwatchIndex={props.activeSwatchIndex}
+        pinnedSwatch={props.pinnedSwatch}
+        onSwatchHover={props.onSwatchHover}
+        onSwatchToggle={props.onSwatchToggle}
+        onClearPin={props.onClearPin}
+      />
     </div>
   );
 }
 
-function NumberedSlide({ puzzle }: { puzzle: GeneratedPuzzle }) {
+function NumberedSlide(props: InteractiveSlideProps) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
       <PreviewPanel title="Simplified color-by-number worksheet">
-        <PixelGrid palette={puzzle.palette} mode="number" withAxes />
+        <PixelGrid
+          palette={props.puzzle.palette}
+          mode="number"
+          labelOptions={props.labelOptions}
+          activeCells={props.activeCells}
+          withAxes
+        />
       </PreviewPanel>
-      <PaletteLegend palette={puzzle.palette} mode="numbers" />
+      <PaletteLegend
+        palette={props.puzzle.palette}
+        mode="numbers"
+        labelOptions={props.labelOptions}
+        activeSwatchIndex={props.activeSwatchIndex}
+        pinnedSwatch={props.pinnedSwatch}
+        onSwatchHover={props.onSwatchHover}
+        onSwatchToggle={props.onSwatchToggle}
+        onClearPin={props.onClearPin}
+      />
     </div>
   );
 }
@@ -438,12 +593,16 @@ function PixelGrid({
   withAxes = false,
   compact = false,
   className = "",
+  labelOptions,
+  activeCells = null,
 }: {
   palette: PaletteEntry[];
   mode: "color" | "blank" | "number";
   withAxes?: boolean;
   compact?: boolean;
   className?: string;
+  labelOptions: LabelOptions;
+  activeCells?: Set<string> | null;
 }) {
   const cellMap = useMemo(() => buildCellMap(palette), [palette]);
   const numberMap = useMemo(() => buildNumberMap(palette), [palette]);
@@ -453,6 +612,8 @@ function PixelGrid({
     const label = cellLabel(x, y);
     return { x, y, label, rgb: cellMap.get(label), number: numberMap.get(label) };
   });
+
+  const highlightActive = activeCells !== null;
 
   if (withAxes) {
     return (
@@ -464,11 +625,19 @@ function PixelGrid({
           }}
         >
           <AxisCell />
-          {COLUMNS.split("").map((column) => (
-            <AxisCell key={column}>{column}</AxisCell>
+          {Array.from({ length: GRID_N }, (_, x) => (
+            <AxisCell key={x}>{displayColumn(x, labelOptions)}</AxisCell>
           ))}
-          {ROWS.split("").map((row, y) => (
-            <FragmentRow key={row} row={row} y={y} cells={cells} mode={mode} />
+          {Array.from({ length: GRID_N }, (_, y) => (
+            <FragmentRow
+              key={y}
+              y={y}
+              rowChar={displayRow(y, labelOptions)}
+              cells={cells}
+              mode={mode}
+              activeCells={activeCells}
+              highlightActive={highlightActive}
+            />
           ))}
         </div>
       </div>
@@ -487,6 +656,8 @@ function PixelGrid({
           number={gridCell.number}
           mode={mode}
           compact={compact}
+          isActive={activeCells?.has(gridCell.label) ?? false}
+          dim={highlightActive && !(activeCells?.has(gridCell.label) ?? false)}
         />
       ))}
     </div>
@@ -494,13 +665,15 @@ function PixelGrid({
 }
 
 function FragmentRow({
-  row,
   y,
+  rowChar,
   cells,
   mode,
+  activeCells,
+  highlightActive,
 }: {
-  row: string;
   y: number;
+  rowChar: string;
   cells: Array<{
     x: number;
     y: number;
@@ -509,19 +682,26 @@ function FragmentRow({
     number?: number;
   }>;
   mode: "color" | "blank" | "number";
+  activeCells: Set<string> | null;
+  highlightActive: boolean;
 }) {
   const rowCells = cells.filter((cell) => cell.y === y);
   return (
     <>
-      <AxisCell>{row}</AxisCell>
-      {rowCells.map((gridCell) => (
-        <PreviewCell
-          key={gridCell.label}
-          rgb={gridCell.rgb}
-          number={gridCell.number}
-          mode={mode}
-        />
-      ))}
+      <AxisCell>{rowChar}</AxisCell>
+      {rowCells.map((gridCell) => {
+        const isActive = activeCells?.has(gridCell.label) ?? false;
+        return (
+          <PreviewCell
+            key={gridCell.label}
+            rgb={gridCell.rgb}
+            number={gridCell.number}
+            mode={mode}
+            isActive={isActive}
+            dim={highlightActive && !isActive}
+          />
+        );
+      })}
     </>
   );
 }
@@ -539,22 +719,44 @@ function PreviewCell({
   number,
   mode,
   compact = false,
+  isActive = false,
+  dim = false,
 }: {
   rgb?: RGB;
   number?: number;
   mode: "color" | "blank" | "number";
   compact?: boolean;
+  isActive?: boolean;
+  dim?: boolean;
 }) {
   const filled = Boolean(rgb);
   const background =
-    mode === "color" && rgb ? rgbToCss(rgb) : filled ? "#ffffff" : "#f3f5f7";
+    mode === "color" && rgb
+      ? rgbToCss(rgb)
+      : isActive && rgb
+        ? rgbToCssAlpha(rgb, 0.55)
+        : filled
+          ? "#ffffff"
+          : "#f3f5f7";
+
+  const style: React.CSSProperties = {
+    backgroundColor: background,
+    transition: "opacity 120ms ease, box-shadow 120ms ease",
+  };
+  if (dim) {
+    style.opacity = 0.32;
+  }
+  if (isActive) {
+    style.boxShadow = "inset 0 0 0 2px var(--accent)";
+    style.zIndex = 1;
+  }
 
   return (
     <div
-      className={`flex aspect-square items-center justify-center border border-[#dfe4ea] ${
+      className={`relative flex aspect-square items-center justify-center border border-[#dfe4ea] ${
         compact ? "text-[6px]" : "text-[10px] sm:text-xs"
       } font-semibold text-[var(--heading)]`}
-      style={{ backgroundColor: background }}
+      style={style}
     >
       {mode === "number" && number ? number : null}
     </div>
@@ -564,37 +766,189 @@ function PreviewCell({
 function PaletteLegend({
   palette,
   mode,
+  labelOptions,
+  activeSwatchIndex,
+  pinnedSwatch,
+  onSwatchHover,
+  onSwatchToggle,
+  onClearPin,
 }: {
   palette: PaletteEntry[];
   mode: "coordinates" | "numbers";
+  labelOptions: LabelOptions;
+  activeSwatchIndex: number | null;
+  pinnedSwatch: number | null;
+  onSwatchHover: (index: number | null) => void;
+  onSwatchToggle: (index: number) => void;
+  onClearPin: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--panel)] p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-        {mode === "numbers" ? "Color key" : "Coordinate key"}
-      </h3>
-      <div className="mt-3 space-y-3">
-        {palette.map((entry, index) => (
-          <div key={`${entry.rgb.join("-")}-${index}`} className="flex gap-3">
-            <div
-              className="mt-0.5 h-6 w-6 shrink-0 rounded-sm border border-black/40"
-              style={{ backgroundColor: rgbToCss(entry.rgb) }}
-            />
-            <div className="min-w-0 text-sm leading-5">
-              <div className="font-semibold text-[var(--heading)]">
-                {mode === "numbers" ? `Color ${index + 1}` : `Swatch ${index + 1}`}
-                <span className="ml-2 font-normal text-[var(--muted)]">
-                  {entry.cells.length} cells
-                </span>
+    <div
+      className="rounded-lg border border-[var(--border)] bg-[var(--panel)] p-4"
+      onMouseLeave={() => onSwatchHover(null)}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+          {mode === "numbers" ? "Color key" : "Coordinate key"}
+        </h3>
+        {pinnedSwatch !== null ? (
+          <button
+            type="button"
+            onClick={onClearPin}
+            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-[11px] font-medium text-[var(--heading)] transition hover:border-[var(--accent)]"
+          >
+            Clear pin
+          </button>
+        ) : (
+          <span className="text-[11px] font-medium text-[var(--muted)]">
+            Hover to glow · click to pin
+          </span>
+        )}
+      </div>
+      <div className="mt-3 space-y-2">
+        {palette.map((entry, index) => {
+          const isActive = activeSwatchIndex === index;
+          const isPinned = pinnedSwatch === index;
+          return (
+            <button
+              key={`${entry.rgb.join("-")}-${index}`}
+              type="button"
+              onMouseEnter={() => onSwatchHover(index)}
+              onFocus={() => onSwatchHover(index)}
+              onClick={() => onSwatchToggle(index)}
+              aria-pressed={isPinned}
+              className={`flex w-full gap-3 rounded-md border p-2 text-left transition ${
+                isPinned
+                  ? "border-[var(--accent)] bg-[var(--accent-soft)]/50"
+                  : isActive
+                    ? "border-[var(--accent)] bg-white"
+                    : "border-transparent bg-transparent hover:border-[var(--border)] hover:bg-white"
+              }`}
+            >
+              <div
+                className="mt-0.5 h-6 w-6 shrink-0 rounded-sm border border-black/40"
+                style={{ backgroundColor: rgbToCss(entry.rgb) }}
+              />
+              <div className="min-w-0 text-sm leading-5">
+                <div className="font-semibold text-[var(--heading)]">
+                  {mode === "numbers"
+                    ? `Color ${index + 1}`
+                    : `Swatch ${index + 1}`}
+                  <span className="ml-2 font-normal text-[var(--muted)]">
+                    {entry.cells.length} cells
+                  </span>
+                  {isPinned ? (
+                    <span className="ml-2 rounded-sm bg-[var(--accent)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      Pinned
+                    </span>
+                  ) : null}
+                </div>
+                {mode === "coordinates" ? (
+                  <p className="mt-1 break-words text-xs text-[var(--muted)]">
+                    {entry.cells
+                      .map((c) => transformLabel(c, labelOptions))
+                      .join(", ")}
+                  </p>
+                ) : null}
               </div>
-              {mode === "coordinates" ? (
-                <p className="mt-1 break-words text-xs text-[var(--muted)]">
-                  {entry.cells.join(", ")}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        ))}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LabelStyleControls({
+  labelOptions,
+  onChange,
+  isRebuildingPdf,
+}: {
+  labelOptions: LabelOptions;
+  onChange: (next: LabelOptions) => void;
+  isRebuildingPdf: boolean;
+}) {
+  const isDefault = isDefaultLabelOptions(labelOptions);
+  return (
+    <div className="mt-4 flex flex-col gap-3 rounded-md border border-[var(--border)] bg-[var(--panel)] p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+          Label style
+        </span>
+        <CaseSegment
+          legend="Columns"
+          value={labelOptions.columnsCase}
+          onChange={(next) =>
+            onChange({ ...labelOptions, columnsCase: next })
+          }
+        />
+        <CaseSegment
+          legend="Rows"
+          value={labelOptions.rowsCase}
+          onChange={(next) => onChange({ ...labelOptions, rowsCase: next })}
+        />
+      </div>
+      <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+        {isRebuildingPdf ? (
+          <span aria-live="polite">Re-rendering PDF…</span>
+        ) : null}
+        {!isDefault ? (
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ columnsCase: "upper", rowsCase: "lower" })
+            }
+            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 font-medium text-[var(--heading)] transition hover:border-[var(--accent)]"
+          >
+            Reset to A-P / a-p
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CaseSegment({
+  legend,
+  value,
+  onChange,
+}: {
+  legend: string;
+  value: "upper" | "lower";
+  onChange: (next: "upper" | "lower") => void;
+}) {
+  const options: Array<{ value: "upper" | "lower"; label: string }> = [
+    { value: "upper", label: "A-P" },
+    { value: "lower", label: "a-p" },
+  ];
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-[var(--heading)]">
+        {legend}
+      </span>
+      <div
+        role="group"
+        aria-label={`${legend} case`}
+        className="inline-flex overflow-hidden rounded-md border border-[var(--border)] bg-white"
+      >
+        {options.map((option) => {
+          const isActive = option.value === value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              aria-pressed={isActive}
+              className={`px-3 py-1.5 text-xs font-semibold transition ${
+                isActive
+                  ? "bg-[var(--accent)] text-white"
+                  : "text-[var(--heading)] hover:bg-[var(--panel)]"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -622,6 +976,10 @@ function buildNumberMap(palette: PaletteEntry[]): Map<string, number> {
 
 function rgbToCss(rgb: RGB): string {
   return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
+}
+
+function rgbToCssAlpha(rgb: RGB, alpha: number): string {
+  return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]} / ${alpha})`;
 }
 
 function DifficultyBadgeFromPalette({ palette }: { palette: PaletteEntry[] }) {

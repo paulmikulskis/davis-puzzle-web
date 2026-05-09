@@ -1,4 +1,4 @@
-import { GRID_N, type PaletteEntry } from "@/lib/palette";
+import { GRID_N, type LabelOptions, type PaletteEntry } from "@/lib/palette";
 import {
   PAGE_H,
   PAGE_W,
@@ -17,6 +17,7 @@ export function renderColorByNumberPage(
   ctx: PdfContext,
   itemLabel: string,
   palette: PaletteEntry[],
+  labelOptions: LabelOptions,
 ): void {
   drawTitle(ctx, `${itemLabel} (Color by Number)`);
 
@@ -31,7 +32,7 @@ export function renderColorByNumberPage(
   const gridW = GRID_N * cell;
   const gx = 60;
   const gy = PAGE_H - 100;
-  drawGrid(ctx, { gx, gy, cell, numbers });
+  drawGrid(ctx, { gx, gy, cell, numbers, labelOptions });
 
   const rx = gx + gridW + 30;
   const swatchSize = 20.0;

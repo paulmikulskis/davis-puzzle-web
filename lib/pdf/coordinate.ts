@@ -1,4 +1,9 @@
-import { GRID_N, type PaletteEntry } from "@/lib/palette";
+import {
+  GRID_N,
+  transformLabel,
+  type LabelOptions,
+  type PaletteEntry,
+} from "@/lib/palette";
 import {
   PAGE_H,
   PAGE_W,
@@ -17,6 +22,7 @@ export function renderCoordinatePage(
   ctx: PdfContext,
   itemLabel: string,
   palette: PaletteEntry[],
+  labelOptions: LabelOptions,
 ): void {
   drawTitle(ctx, `${itemLabel} (Coordinate Coloring)`);
 
@@ -24,7 +30,7 @@ export function renderCoordinatePage(
   const gridW = GRID_N * cell;
   const gx = 60;
   const gy = PAGE_H - 100;
-  drawGrid(ctx, { gx, gy, cell, labelSize: 8.0 });
+  drawGrid(ctx, { gx, gy, cell, labelSize: 8.0, labelOptions });
 
   const swatchSize = 20.0;
   const textIndent = 8.0;
@@ -37,7 +43,8 @@ export function renderCoordinatePage(
   let cy = gy - 14;
   const interGap = 6.0;
   for (const entry of palette) {
-    const wrapped = wrapCoordsToWidth(ctx, entry.cells, keyTextMaxW);
+    const displayCells = entry.cells.map((c) => transformLabel(c, labelOptions));
+    const wrapped = wrapCoordsToWidth(ctx, displayCells, keyTextMaxW);
     cy =
       drawKeyEntry(ctx, keyX, cy, entry.rgb, wrapped, {
         swatchSize,
@@ -64,8 +71,13 @@ export function renderCoordinatePage(
     py -= 32;
   }
 
-  drawFooter(
-    ctx,
-    "Hard: each cell label is column letter (A-P) + row letter (a-p), e.g. 'Dk' = column D, row k.",
-  );
+  drawFooter(ctx, describeAxisFooter(labelOptions));
+}
+
+function describeAxisFooter(options: LabelOptions): string {
+  const colsRange = options.columnsCase === "upper" ? "A-P" : "a-p";
+  const rowsRange = options.rowsCase === "upper" ? "A-P" : "a-p";
+  const exampleCol = options.columnsCase === "upper" ? "D" : "d";
+  const exampleRow = options.rowsCase === "upper" ? "K" : "k";
+  return `Hard: each cell label is column letter (${colsRange}) + row letter (${rowsRange}), e.g. '${exampleCol}${exampleRow}' = column ${exampleCol}, row ${exampleRow}.`;
 }
