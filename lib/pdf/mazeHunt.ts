@@ -95,6 +95,12 @@ export interface BuildMazeHuntPdfOptions {
   splitOntoTwoPages?: boolean;
   /** Free-text session label appended to footer. Default empty. */
   sessionLabel?: string;
+  /**
+   * Name of the preset this generation was driven by, if any. When present we
+   * prepend it to the footer descriptor so a stack of past worksheets is
+   * visually triageable from the printed paper alone (Feature 8 §8).
+   */
+  presetName?: string;
 }
 
 interface PageFonts {
@@ -414,11 +420,15 @@ function drawFooter(
   const sizeDescriptor = sizeDescriptorFor(options.grid);
   const cutoutDescriptor = cutoutDescriptorFor(options.cutoutSize);
   const date = new Date().toISOString().slice(0, 10);
-  const parts = [
-    `Maze Hunt - ${options.theme.displayName}`,
+  const parts: string[] = [];
+  if (options.presetName && options.presetName.trim().length > 0) {
+    parts.push(options.presetName.trim());
+  }
+  parts.push(`Maze Hunt - ${options.theme.displayName}`);
+  parts.push(
     `Maze: ${sizeDescriptor} / Cutouts: ${cutoutDescriptor} / Objectives: ${options.objectives.length}`,
-    date,
-  ];
+  );
+  parts.push(date);
   if (options.sessionLabel && options.sessionLabel.trim().length > 0) {
     parts.push(options.sessionLabel.trim());
   }

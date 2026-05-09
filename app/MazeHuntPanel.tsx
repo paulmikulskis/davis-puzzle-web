@@ -31,6 +31,15 @@ import {
   type ObjectiveSlot,
 } from "@/lib/objectives";
 import { isCatalogFile, type CatalogFile } from "@/lib/catalog";
+import {
+  loadPreset,
+  recordPresetPrint,
+  savePreset,
+  type MazeHuntPreset,
+  type MazeHuntPresetConfig,
+} from "@/lib/presets";
+import { PresetLibrary } from "@/app/PresetLibrary";
+import { generateSeed } from "@/lib/maze/rng";
 
 interface GeneratedPdf {
   id: string;
@@ -135,6 +144,16 @@ const SLOT_LABELS: Record<ObjectiveSlot, string> = {
   "state-change": "State change",
 };
 
+function isObjectiveSlot(value: string): value is ObjectiveSlot {
+  return (
+    value === "navigate" ||
+    value === "find" ||
+    value === "escape" ||
+    value === "craft" ||
+    value === "state-change"
+  );
+}
+
 export interface MazeHuntPanelProps {
   initialThemeId?: string;
   initialDifficulty?: DifficultyPreset;
@@ -161,6 +180,7 @@ export function MazeHuntPanel({
   const [overrides, setOverrides] = useState<
     Partial<Record<ObjectiveSlot, string>>
   >({});
+  const [lockSeeds, setLockSeeds] = useState(false);
   const [pdf, setPdf] = useState<GeneratedPdf | null>(null);
   const [status, setStatus] = useState(
     "Pick a theme and a difficulty, then Generate.",
@@ -168,6 +188,21 @@ export function MazeHuntPanel({
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const generateButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Preset library wiring. `currentPresetId` is set when Andrew loads a
+  // preset; cleared when he edits a knob (then the editor is "dirty"). After
+  // a Generate from a loaded preset we call `recordPresetPrint(id)` so
+  // last-printed dates stay current.
+  const [currentPresetId, setCurrentPresetId] = useState<string | null>(null);
+  const [presetName, setPresetName] = useState<string>("");
+  // The configSeed is sticky across Generates of a single preset; the runSeed
+  // is only persisted when `lockSeeds` is on. We keep both client-side state
+  // so we don't have to re-derive them on every render.
+  const [configSeed, setConfigSeed] = useState<string>(() => generateSeed());
+  const [lockedRunSeed, setLockedRunSeed] = useState<string | null>(null);
+  // `isDirty` flips to true the moment any tracked knob diverges from the
+  // last loaded/saved preset config. Generate clears it.
+  const [isDirty, setIsDirty] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +253,37 @@ export function MazeHuntPanel({
   function changeActiveTheme(nextThemeId: string): void {
     setActiveThemeId(nextThemeId);
     setOverrides({});
+    setIsDirty(true);
+  }
+
+  function setDifficultyDirty(next: DifficultyPreset): void {
+    setDifficulty(next);
+    setIsDirty(true);
+  }
+
+  function setBwSafeDirty(next: boolean): void {
+    setBwSafe(next);
+    setIsDirty(true);
+  }
+
+  function setSplitDirty(next: boolean): void {
+    setSplitOntoTwoPages(next);
+    setIsDirty(true);
+  }
+
+  function setSessionLabelDirty(next: string): void {
+    setSessionLabel(next);
+    setIsDirty(true);
+  }
+
+  function setLockSeedsDirty(next: boolean): void {
+    setLockSeeds(next);
+    setIsDirty(true);
+    // Turning lock off also clears the frozen run seed; re-enabling means a
+    // fresh Generate will capture whatever seed comes out next.
+    if (!next) {
+      setLockedRunSeed(null);
+    }
   }
 
   function setOverrideFor(slot: ObjectiveSlot, value: string): void {
@@ -230,6 +296,70 @@ export function MazeHuntPanel({
       }
       return next;
     });
+    setIsDirty(true);
+  }
+
+  // The live editor configuration, packaged in the preset wire shape so the
+  // PresetLibrary component can save it without further translation.
+  const currentConfig: MazeHuntPresetConfig = useMemo(() => {
+    const overrideMap: Record<string, string> = {};
+    for (const [slot, text] of Object.entries(overrides)) {
+      if (typeof text === "string" && text.trim().length > 0) {
+        overrideMap[slot] = text;
+      }
+    }
+    return {
+      themeId: activeThemeId,
+      difficulty,
+      overrides: Object.keys(overrideMap).length > 0 ? overrideMap : undefined,
+      bwSafe,
+      splitOntoTwoPages,
+      configSeed,
+      runSeed: lockSeeds && lockedRunSeed ? lockedRunSeed : undefined,
+      lockSeeds,
+      sessionLabel,
+    };
+  }, [
+    activeThemeId,
+    difficulty,
+    overrides,
+    bwSafe,
+    splitOntoTwoPages,
+    configSeed,
+    lockSeeds,
+    lockedRunSeed,
+    sessionLabel,
+  ]);
+
+  function handleLoadPreset(preset: MazeHuntPreset): void {
+    setActiveThemeId(preset.config.themeId);
+    setDifficulty(preset.config.difficulty);
+    const nextOverrides: Partial<Record<ObjectiveSlot, string>> = {};
+    if (preset.config.overrides) {
+      for (const [slot, text] of Object.entries(preset.config.overrides)) {
+        if (isObjectiveSlot(slot)) {
+          nextOverrides[slot] = text;
+        }
+      }
+    }
+    setOverrides(nextOverrides);
+    setBwSafe(preset.config.bwSafe);
+    setSplitOntoTwoPages(preset.config.splitOntoTwoPages);
+    setSessionLabel(preset.config.sessionLabel);
+    setLockSeeds(preset.config.lockSeeds);
+    setConfigSeed(preset.config.configSeed);
+    setLockedRunSeed(preset.config.runSeed ?? null);
+    setCurrentPresetId(preset.id);
+    setPresetName(preset.name);
+    setIsDirty(false);
+    // Drop any previously generated PDF preview — it doesn't represent the
+    // newly loaded configuration anymore.
+    setPdf((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return null;
+    });
+    setStatus(`Loaded preset "${preset.name}". Generate to render.`);
+    setError(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -242,6 +372,11 @@ export function MazeHuntPanel({
     setIsGenerating(true);
     let nextUrl: string | null = null;
     let committed = false;
+    // Seed strategy per plan.md §7.7: when `lockSeeds` is on we replay the
+    // frozen run seed so the maze comes out byte-for-byte identical; when off
+    // we let the maze generator roll a fresh seed for each Generate so Andrew
+    // can use the same loaded preset for multiple kids in a group.
+    const seedForRun = lockSeeds && lockedRunSeed ? lockedRunSeed : undefined;
     try {
       setStatus("Generating maze...");
       const { silhouette, preset } = silhouetteForTheme(
@@ -253,6 +388,7 @@ export function MazeHuntPanel({
         cellCountPreset: preset,
         entrance: defaultEntranceFor(activeTheme),
         exit: defaultExitFor(activeTheme),
+        seed: seedForRun,
       });
 
       setStatus("Placing collectibles...");
@@ -347,6 +483,7 @@ export function MazeHuntPanel({
         blackAndWhiteSafe: bwSafe,
         splitOntoTwoPages,
         sessionLabel,
+        presetName: currentPresetId !== null ? presetName : undefined,
       });
       const buffer = new ArrayBuffer(pdfBytes.byteLength);
       new Uint8Array(buffer).set(pdfBytes);
@@ -367,6 +504,45 @@ export function MazeHuntPanel({
         objectives,
       });
       committed = true;
+      // Generate clears the dirty flag — what's on screen now matches the
+      // editor inputs that produced it.
+      setIsDirty(false);
+      // Lock-seeds plumbing: when on and we don't yet have a frozen seed,
+      // capture the one the maze generator just used and persist it back into
+      // the loaded preset so subsequent loads reproduce the same maze.
+      if (lockSeeds && currentPresetId !== null) {
+        const presetForUpdate = loadPreset(currentPresetId);
+        if (presetForUpdate && presetForUpdate.config.runSeed !== grid.seed) {
+          const updated: MazeHuntPreset = {
+            ...presetForUpdate,
+            updatedAt: new Date().toISOString(),
+            config: {
+              ...presetForUpdate.config,
+              runSeed: grid.seed,
+              lockSeeds: true,
+            },
+          };
+          try {
+            savePreset(updated);
+            setLockedRunSeed(grid.seed);
+          } catch {
+            // Quota errors here are non-fatal for the print flow; the user
+            // still gets their PDF, they just lose the byte-stable replay.
+          }
+        }
+      } else if (!lockSeeds) {
+        // Make sure we don't carry a stale frozen seed when lock is off.
+        setLockedRunSeed(null);
+      }
+      // Stamp last-printed on the loaded preset so the library list floats it
+      // back to the top next time Andrew opens the panel.
+      if (currentPresetId !== null) {
+        try {
+          recordPresetPrint(currentPresetId);
+        } catch {
+          // Non-fatal.
+        }
+      }
       const mismatchCount = objectives.filter(
         (o) => o.countMismatch !== undefined,
       ).length;
@@ -477,9 +653,16 @@ export function MazeHuntPanel({
               <select
                 id="difficulty"
                 value={difficulty}
-                onChange={(e) =>
-                  setDifficulty(e.target.value as DifficultyPreset)
-                }
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (
+                    next === "easy" ||
+                    next === "medium" ||
+                    next === "hard"
+                  ) {
+                    setDifficultyDirty(next);
+                  }
+                }}
                 disabled={isGenerating}
                 className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
               >
@@ -499,7 +682,7 @@ export function MazeHuntPanel({
                 id="session-label"
                 type="text"
                 value={sessionLabel}
-                onChange={(e) => setSessionLabel(e.target.value)}
+                onChange={(e) => setSessionLabelDirty(e.target.value)}
                 disabled={isGenerating}
                 placeholder="e.g. Tuesday group, Cohort A"
                 className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
@@ -510,7 +693,7 @@ export function MazeHuntPanel({
                 <input
                   type="checkbox"
                   checked={bwSafe}
-                  onChange={(e) => setBwSafe(e.target.checked)}
+                  onChange={(e) => setBwSafeDirty(e.target.checked)}
                   disabled={isGenerating}
                 />
                 <span>Black-and-white safe path</span>
@@ -519,10 +702,22 @@ export function MazeHuntPanel({
                 <input
                   type="checkbox"
                   checked={splitOntoTwoPages}
-                  onChange={(e) => setSplitOntoTwoPages(e.target.checked)}
+                  onChange={(e) => setSplitDirty(e.target.checked)}
                   disabled={isGenerating}
                 />
                 <span>Split onto two pages (answer key off-page)</span>
+              </label>
+              <label
+                className="flex items-center gap-2 text-sm"
+                title="Reproduce the exact same maze on every load. Off by default so each generate gives a fresh layout."
+              >
+                <input
+                  type="checkbox"
+                  checked={lockSeeds}
+                  onChange={(e) => setLockSeedsDirty(e.target.checked)}
+                  disabled={isGenerating}
+                />
+                <span>Lock seeds</span>
               </label>
             </div>
             <details className="rounded-md border border-[var(--border)] bg-[var(--panel)] p-3 text-sm">
@@ -582,6 +777,24 @@ export function MazeHuntPanel({
             ) : null}
           </div>
         </form>
+        <details className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm">
+          <summary className="cursor-pointer text-sm font-semibold text-[var(--heading)]">
+            Preset library
+            {currentPresetId !== null ? (
+              <span className="ml-2 text-xs font-normal text-[var(--muted)]">
+                loaded: {presetName}
+                {isDirty ? " (modified)" : ""}
+              </span>
+            ) : null}
+          </summary>
+          <div className="mt-3">
+            <PresetLibrary
+              currentConfig={currentConfig}
+              isDirty={isDirty}
+              onLoad={handleLoadPreset}
+            />
+          </div>
+        </details>
         {pdf ? (
           <section className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[var(--heading)]">
