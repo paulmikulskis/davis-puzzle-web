@@ -1,12 +1,23 @@
 "use client";
 
-// Maze Hunt panel — drives the full pipeline (maze + collectibles + assembly
-// + cutouts + objectives + two-up print) end-to-end. Embedded inside the
-// activity tab strip on `/`. Receives an initialThemeId / initialDifficulty
-// from the activity selector when Andrew picks a card. Exits back to the
-// selector via the "Back to themes" button.
+// Maze Hunt panel — reactive editor + live visualizer.
+//
+// Knobs (theme, difficulty, BW, split, session label, overrides) update a
+// single reactive `liveSnapshot` via useMemo. The visualizer paints the same
+// snapshot the PDF builder will commit, so Davis sees what he's building as
+// he edits — no "Generate" intermediate step, no stale stats.
+//
+// Sprite assets are pre-fetched once per theme into in-memory object URLs
+// shared by the visualizer and the PDF builder.
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import {
   generateMaze,
   type CardinalPosition,
@@ -15,14 +26,14 @@ import {
   type MazeGrid,
   type Silhouette,
 } from "@/lib/maze";
-import { placeCollectibles } from "@/lib/placement";
+import { generateSeed } from "@/lib/maze/rng";
+import { placeCollectibles, type Placement } from "@/lib/placement";
 import { assemblyIdFromKey, getAssembly } from "@/lib/assemblies";
 import {
   loadMazeHuntThemes,
   type DifficultyPreset,
   type MazeHuntTheme,
 } from "@/lib/mazeHuntThemes";
-import { isPuzzleError } from "@/lib/errors";
 import {
   buildCatalogLookup,
   composeObjectives,
@@ -39,21 +50,15 @@ import {
   type MazeHuntPresetConfig,
 } from "@/lib/presets";
 import { PresetLibrary } from "@/app/PresetLibrary";
-import { generateSeed } from "@/lib/maze/rng";
+import {
+  MazeHuntVisualizer,
+  type CutoutSize,
+  type WorksheetSnapshot,
+} from "@/app/MazeHuntVisualizer";
 
-interface GeneratedPdf {
-  id: string;
-  url: string;
-  filename: string;
-  themeLabel: string;
-  difficulty: DifficultyPreset;
-  seed: string;
-  cells: { across: number; down: number };
-  walls: number;
-  collectibleCount: number;
-  hasAssembly: boolean;
-  objectives: Objective[];
-}
+// ---------------------------------------------------------------------------
+// Theme → maze plumbing
+// ---------------------------------------------------------------------------
 
 function silhouetteForTheme(
   theme: MazeHuntTheme,
@@ -99,7 +104,6 @@ function defaultExitFor(theme: MazeHuntTheme): CardinalPosition {
 function findInShapeCenter(grid: MazeGrid): MazeCell | null {
   const cx = Math.floor(grid.cellsAcross / 2);
   const cy = Math.floor(grid.cellsDown / 2);
-  // Spiral outwards looking for an in-shape cell near geometric center.
   for (let r = 0; r < Math.max(grid.cellsAcross, grid.cellsDown); r += 1) {
     for (let dy = -r; dy <= r; dy += 1) {
       for (let dx = -r; dx <= r; dx += 1) {
@@ -121,29 +125,6 @@ function findInShapeCenter(grid: MazeGrid): MazeCell | null {
   return null;
 }
 
-async function fetchSpriteBytes(
-  paths: Record<string, string>,
-): Promise<Record<string, Uint8Array>> {
-  const out: Record<string, Uint8Array> = {};
-  await Promise.all(
-    Object.entries(paths).map(async ([key, path]) => {
-      const res = await fetch(path);
-      if (!res.ok) return;
-      const buf = await res.arrayBuffer();
-      out[key] = new Uint8Array(buf);
-    }),
-  );
-  return out;
-}
-
-const SLOT_LABELS: Record<ObjectiveSlot, string> = {
-  navigate: "Navigate",
-  find: "Find",
-  escape: "Escape",
-  craft: "Craft",
-  "state-change": "State change",
-};
-
 function isObjectiveSlot(value: string): value is ObjectiveSlot {
   return (
     value === "navigate" ||
@@ -154,12 +135,71 @@ function isObjectiveSlot(value: string): value is ObjectiveSlot {
   );
 }
 
+const ENTITY_NAMES = new Set([
+  "Ender_Dragon",
+  "Wither",
+  "Elder_Guardian",
+  "Warden",
+  "Iron_Golem",
+  "Snow_Golem",
+  "Allay",
+  "Blaze",
+  "Wither_Skeleton",
+  "Skeleton",
+  "Zombie",
+  "Creeper",
+]);
+
+function spritePathFor(canonicalName: string): string {
+  const slug = canonicalName
+    .toLowerCase()
+    .replace(/[()]/g, "")
+    .replace(/'/g, "");
+  if (ENTITY_NAMES.has(canonicalName)) return `/entities/${slug}.png`;
+  return `/blocks/${slug}.png`;
+}
+
+const SLOT_LABELS: Record<ObjectiveSlot, string> = {
+  navigate: "Navigate",
+  find: "Find",
+  escape: "Escape",
+  craft: "Craft",
+  "state-change": "State change",
+};
+
+const EDITABLE_SLOTS: ObjectiveSlot[] = [
+  "navigate",
+  "find",
+  "escape",
+  "craft",
+  "state-change",
+];
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 export interface MazeHuntPanelProps {
   initialThemeId?: string;
   initialDifficulty?: DifficultyPreset;
-  /** Optional callback — invoked when Andrew clicks "Back to themes". */
   onBackToSelector?: () => void;
 }
+
+interface PipelineResult {
+  ok: true;
+  snapshot: WorksheetSnapshot;
+  spriteBytes: Record<string, Uint8Array>;
+  filename: string;
+}
+
+interface PipelineError {
+  ok: false;
+  message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function MazeHuntPanel({
   initialThemeId,
@@ -181,29 +221,33 @@ export function MazeHuntPanel({
     Partial<Record<ObjectiveSlot, string>>
   >({});
   const [lockSeeds, setLockSeeds] = useState(false);
-  const [pdf, setPdf] = useState<GeneratedPdf | null>(null);
-  const [status, setStatus] = useState(
-    "Pick a theme and a difficulty, then Generate.",
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const generateButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // Preset library wiring. `currentPresetId` is set when Andrew loads a
-  // preset; cleared when he edits a knob (then the editor is "dirty"). After
-  // a Generate from a loaded preset we call `recordPresetPrint(id)` so
-  // last-printed dates stay current.
+  const [configSeed, setConfigSeed] = useState<string>(() => generateSeed());
+  const [placementSalt, setPlacementSalt] = useState<string>(() => "P");
+  const [lockedRunSeed, setLockedRunSeed] = useState<string | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+  const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Sprite preload: bytes (for PDF) + object URLs (for SVG visualizer).
+  const [spriteBytes, setSpriteBytes] = useState<Record<string, Uint8Array>>(
+    {},
+  );
+  const [spriteUrls, setSpriteUrls] = useState<Record<string, string>>({});
+  const [spritesLoaded, setSpritesLoaded] = useState(false);
+
+  // Preview view toggle ("two-up" | "child" | "answer").
+  const [previewView, setPreviewView] = useState<"two-up" | "child" | "answer">(
+    "two-up",
+  );
+
+  // Preset wiring.
   const [currentPresetId, setCurrentPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState<string>("");
-  // The configSeed is sticky across Generates of a single preset; the runSeed
-  // is only persisted when `lockSeeds` is on. We keep both client-side state
-  // so we don't have to re-derive them on every render.
-  const [configSeed, setConfigSeed] = useState<string>(() => generateSeed());
-  const [lockedRunSeed, setLockedRunSeed] = useState<string | null>(null);
-  // `isDirty` flips to true the moment any tracked knob diverges from the
-  // last loaded/saved preset config. Generate clears it.
   const [isDirty, setIsDirty] = useState<boolean>(false);
 
+  // Load themes + catalog on mount.
   useEffect(() => {
     let cancelled = false;
     loadMazeHuntThemes()
@@ -213,43 +257,213 @@ export function MazeHuntPanel({
       })
       .catch((err) => {
         if (cancelled) return;
-        setError(
-          err instanceof Error ? err.message : "Failed to load themes.",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load themes.");
       });
     fetch("/items.json", { cache: "default" })
       .then((res) => res.json())
       .then((data: unknown) => {
         if (cancelled) return;
-        if (isCatalogFile(data)) {
-          setCatalog(data);
-        }
+        if (isCatalogFile(data)) setCatalog(data);
       })
       .catch(() => {
         if (cancelled) return;
-        // Non-fatal: objectives composer will still emit text but plurals may
-        // fall back to default rules.
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (pdf) URL.revokeObjectURL(pdf.url);
-    };
-  }, [pdf]);
-
   const activeTheme = useMemo(
     () => themes.find((t) => t.id === activeThemeId) ?? null,
     [themes, activeThemeId],
   );
 
-  // Overrides are kept sticky-by-theme. Switching the theme via the dropdown
-  // clears them in the change handler (not in an effect — see React rule
-  // react-hooks/set-state-in-effect), since overrides reference theme-specific
-  // items ("ender crystals" in End Island isn't a thing in Nether). Per F6 §4.
+  // ----- Sprite preload per theme -----
+  useEffect(() => {
+    if (!activeTheme) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSpritesLoaded(false);
+    const refs = new Set<string>();
+    for (const c of activeTheme.collectibles) refs.add(c.canonicalName);
+    refs.add(activeTheme.boss.canonicalName);
+    const assemblyId = assemblyIdFromKey(activeTheme.assembly.key);
+    const assembly =
+      assemblyId !== null ? getAssembly(assemblyId) : undefined;
+    if (assembly) {
+      for (const row of assembly.gridShape) {
+        for (const slot of row) {
+          if (slot.kind === "paste") {
+            refs.add(slot.defaultItem);
+            refs.add(slot.answerItem);
+          } else if (slot.kind === "decorative") {
+            refs.add(slot.item);
+          }
+        }
+      }
+      for (const cutout of assembly.cutoutPanel) refs.add(cutout.item);
+    }
+    const pairs: [string, string][] = Array.from(refs).map((ref) => [
+      ref,
+      spritePathFor(ref),
+    ]);
+    void Promise.all(
+      pairs.map(async ([ref, path]) => {
+        const res = await fetch(path);
+        if (!res.ok) return [ref, null] as const;
+        const buf = await res.arrayBuffer();
+        return [ref, new Uint8Array(buf)] as const;
+      }),
+    ).then((results) => {
+      if (cancelled) return;
+      const bytes: Record<string, Uint8Array> = {};
+      const urls: Record<string, string> = {};
+      for (const [ref, data] of results) {
+        if (data === null) continue;
+        bytes[ref] = data;
+        const buffer = new ArrayBuffer(data.byteLength);
+        new Uint8Array(buffer).set(data);
+        const blob = new Blob([buffer], { type: "image/png" });
+        urls[ref] = URL.createObjectURL(blob);
+      }
+      setSpriteBytes(bytes);
+      setSpriteUrls((prev) => {
+        // Revoke any previous URLs that aren't being kept.
+        for (const u of Object.values(prev)) URL.revokeObjectURL(u);
+        return urls;
+      });
+      setSpritesLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTheme]);
+
+  // Revoke object URLs on unmount.
+  useEffect(() => {
+    return () => {
+      for (const u of Object.values(spriteUrls)) URL.revokeObjectURL(u);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-clear transient download status messages so the surface stays calm.
+  useEffect(() => {
+    if (!downloadStatus) return;
+    const t = window.setTimeout(() => setDownloadStatus(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [downloadStatus]);
+
+  // ----- The reactive pipeline -----
+  // Recomputed whenever inputs change. Pure computation; sub-100ms typically.
+  const pipeline: PipelineResult | PipelineError | null = useMemo(() => {
+    if (!activeTheme) return null;
+    try {
+      const { silhouette, preset } = silhouetteForTheme(
+        activeTheme,
+        difficulty,
+      );
+      const seedToUse = lockSeeds && lockedRunSeed ? lockedRunSeed : configSeed;
+      const grid = generateMaze({
+        silhouette,
+        cellCountPreset: preset,
+        entrance: defaultEntranceFor(activeTheme),
+        exit: defaultExitFor(activeTheme),
+        seed: seedToUse,
+      });
+
+      const diff = activeTheme.difficulties[difficulty];
+      const population = activeTheme.collectibles.map((c) => ({
+        itemRef: c.canonicalName,
+        count: Math.max(
+          1,
+          Math.floor(diff.collectibleCount / activeTheme.collectibles.length),
+        ),
+      }));
+      const placement = placeCollectibles({
+        maze: grid,
+        population,
+        mode: diff.collectiblesAllOnPath ? "all-on-path" : "mixed",
+        seed: grid.seed + placementSalt,
+      });
+      if (!placement.ok) {
+        return {
+          ok: false,
+          message: `Couldn't place collectibles (${placement.reason}). Try re-rolling or a different difficulty.`,
+        };
+      }
+
+      const bossCell = findInShapeCenter(grid);
+      const boss =
+        bossCell !== null
+          ? { cell: bossCell, itemRef: activeTheme.boss.canonicalName }
+          : undefined;
+
+      const assemblyId = assemblyIdFromKey(activeTheme.assembly.key);
+      const assembly =
+        assemblyId !== null ? getAssembly(assemblyId) : undefined;
+
+      const catalogLookup: CatalogLookup =
+        catalog !== null
+          ? buildCatalogLookup(catalog)
+          : { findAsset: () => undefined };
+      const objectives = composeObjectives({
+        theme: activeTheme,
+        placementsByItem: placement.placementsByItem,
+        assembly,
+        catalog: catalogLookup,
+        overrides,
+      });
+
+      const cutoutSize: CutoutSize =
+        diff.cutoutSize === "small"
+          ? "small"
+          : diff.cutoutSize === "large"
+            ? "large"
+            : "medium";
+
+      const snapshot: WorksheetSnapshot = {
+        grid,
+        collectibles: placement.placements,
+        boss,
+        assembly,
+        objectives,
+        cutoutSize,
+        themeDisplayName: activeTheme.displayName,
+        difficulty,
+        bwSafe,
+        sessionLabel,
+        presetName: currentPresetId !== null ? presetName : undefined,
+      };
+      const filename = `${activeTheme.id}_${difficulty}_${grid.seed}.pdf`;
+      return { ok: true, snapshot, spriteBytes, filename };
+    } catch (err) {
+      return {
+        ok: false,
+        message:
+          err instanceof Error
+            ? err.message
+            : "Something went wrong building the worksheet.",
+      };
+    }
+  }, [
+    activeTheme,
+    difficulty,
+    bwSafe,
+    sessionLabel,
+    overrides,
+    configSeed,
+    placementSalt,
+    lockSeeds,
+    lockedRunSeed,
+    catalog,
+    spriteBytes,
+    currentPresetId,
+    presetName,
+  ]);
+
+  // ----- Mutators (each one marks dirty so PresetLibrary knows) -----
+
   function changeActiveTheme(nextThemeId: string): void {
     setActiveThemeId(nextThemeId);
     setOverrides({});
@@ -279,28 +493,55 @@ export function MazeHuntPanel({
   function setLockSeedsDirty(next: boolean): void {
     setLockSeeds(next);
     setIsDirty(true);
-    // Turning lock off also clears the frozen run seed; re-enabling means a
-    // fresh Generate will capture whatever seed comes out next.
-    if (!next) {
-      setLockedRunSeed(null);
-    }
+    if (!next) setLockedRunSeed(null);
   }
 
   function setOverrideFor(slot: ObjectiveSlot, value: string): void {
     setOverrides((prev) => {
       const next = { ...prev };
-      if (value.trim().length === 0) {
-        delete next[slot];
-      } else {
-        next[slot] = value;
-      }
+      if (value.trim().length === 0) delete next[slot];
+      else next[slot] = value;
       return next;
     });
     setIsDirty(true);
   }
 
-  // The live editor configuration, packaged in the preset wire shape so the
-  // PresetLibrary component can save it without further translation.
+  function rerollMaze(): void {
+    setConfigSeed(generateSeed());
+    setLockedRunSeed(null);
+    setIsDirty(true);
+  }
+
+  function rerollPlacements(): void {
+    // Append a counter so the placement seed shifts without disturbing the maze.
+    setPlacementSalt((s) => s + ".");
+    setIsDirty(true);
+  }
+
+  function handleLoadPreset(preset: MazeHuntPreset): void {
+    setActiveThemeId(preset.config.themeId);
+    setDifficulty(preset.config.difficulty);
+    const nextOverrides: Partial<Record<ObjectiveSlot, string>> = {};
+    if (preset.config.overrides) {
+      for (const [slot, text] of Object.entries(preset.config.overrides)) {
+        if (isObjectiveSlot(slot)) nextOverrides[slot] = text;
+      }
+    }
+    setOverrides(nextOverrides);
+    setBwSafe(preset.config.bwSafe);
+    setSplitOntoTwoPages(preset.config.splitOntoTwoPages);
+    setSessionLabel(preset.config.sessionLabel);
+    setLockSeeds(preset.config.lockSeeds);
+    setConfigSeed(preset.config.configSeed);
+    setLockedRunSeed(preset.config.runSeed ?? null);
+    setCurrentPresetId(preset.id);
+    setPresetName(preset.name);
+    setIsDirty(false);
+    setError(null);
+    setDownloadStatus(`Loaded "${preset.name}".`);
+  }
+
+  // ----- Live editor config (for PresetLibrary) -----
   const currentConfig: MazeHuntPresetConfig = useMemo(() => {
     const overrideMap: Record<string, string> = {};
     for (const [slot, text] of Object.entries(overrides)) {
@@ -331,211 +572,74 @@ export function MazeHuntPanel({
     sessionLabel,
   ]);
 
-  function handleLoadPreset(preset: MazeHuntPreset): void {
-    setActiveThemeId(preset.config.themeId);
-    setDifficulty(preset.config.difficulty);
-    const nextOverrides: Partial<Record<ObjectiveSlot, string>> = {};
-    if (preset.config.overrides) {
-      for (const [slot, text] of Object.entries(preset.config.overrides)) {
-        if (isObjectiveSlot(slot)) {
-          nextOverrides[slot] = text;
-        }
-      }
-    }
-    setOverrides(nextOverrides);
-    setBwSafe(preset.config.bwSafe);
-    setSplitOntoTwoPages(preset.config.splitOntoTwoPages);
-    setSessionLabel(preset.config.sessionLabel);
-    setLockSeeds(preset.config.lockSeeds);
-    setConfigSeed(preset.config.configSeed);
-    setLockedRunSeed(preset.config.runSeed ?? null);
-    setCurrentPresetId(preset.id);
-    setPresetName(preset.name);
-    setIsDirty(false);
-    // Drop any previously generated PDF preview — it doesn't represent the
-    // newly loaded configuration anymore.
-    setPdf((prev) => {
-      if (prev) URL.revokeObjectURL(prev.url);
-      return null;
-    });
-    setStatus(`Loaded preset "${preset.name}". Generate to render.`);
+  // ----- Download PDF from the live snapshot -----
+  async function handleDownload(): Promise<void> {
+    if (!pipeline || !pipeline.ok) return;
+    setIsDownloading(true);
     setError(null);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    if (!activeTheme) {
-      setError("No theme loaded yet.");
-      return;
-    }
-    setIsGenerating(true);
-    let nextUrl: string | null = null;
-    let committed = false;
-    // Seed strategy per plan.md §7.7: when `lockSeeds` is on we replay the
-    // frozen run seed so the maze comes out byte-for-byte identical; when off
-    // we let the maze generator roll a fresh seed for each Generate so Andrew
-    // can use the same loaded preset for multiple kids in a group.
-    const seedForRun = lockSeeds && lockedRunSeed ? lockedRunSeed : undefined;
+    setDownloadStatus("Rendering PDF…");
     try {
-      setStatus("Generating maze...");
-      const { silhouette, preset } = silhouetteForTheme(
-        activeTheme,
-        difficulty,
-      );
-      const grid = generateMaze({
-        silhouette,
-        cellCountPreset: preset,
-        entrance: defaultEntranceFor(activeTheme),
-        exit: defaultExitFor(activeTheme),
-        seed: seedForRun,
-      });
-
-      setStatus("Placing collectibles...");
-      const diff = activeTheme.difficulties[difficulty];
-      const population = activeTheme.collectibles.map((c) => ({
-        itemRef: c.canonicalName,
-        count: Math.max(
-          1,
-          Math.floor(diff.collectibleCount / activeTheme.collectibles.length),
-        ),
-      }));
-      const placement = placeCollectibles({
-        maze: grid,
-        population,
-        mode: diff.collectiblesAllOnPath ? "all-on-path" : "mixed",
-        seed: grid.seed + "P",
-      });
-      if (!placement.ok) {
-        throw new Error(`Placement failed: ${placement.reason}`);
-      }
-
-      // Boss center cell.
-      const bossCell = findInShapeCenter(grid);
-      const boss =
-        bossCell !== null
-          ? { cell: bossCell, itemRef: activeTheme.boss.canonicalName }
-          : undefined;
-
-      setStatus("Loading assembly + sprites...");
-      const assemblyId = assemblyIdFromKey(activeTheme.assembly.key);
-      const assembly =
-        assemblyId !== null ? getAssembly(assemblyId) : undefined;
-
-      // Build sprite path map.
-      const spritePaths: Record<string, string> = {};
-      for (const c of activeTheme.collectibles) {
-        spritePaths[c.canonicalName] = canonicalPath(c.canonicalName);
-      }
-      spritePaths[activeTheme.boss.canonicalName] = canonicalPath(
-        activeTheme.boss.canonicalName,
-      );
-      if (assembly) {
-        for (const row of assembly.gridShape) {
-          for (const slot of row) {
-            if (slot.kind === "paste") {
-              spritePaths[slot.defaultItem] = canonicalPath(slot.defaultItem);
-              spritePaths[slot.answerItem] = canonicalPath(slot.answerItem);
-            } else if (slot.kind === "decorative") {
-              spritePaths[slot.item] = canonicalPath(slot.item);
-            }
-          }
-        }
-        for (const cutout of assembly.cutoutPanel) {
-          spritePaths[cutout.item] = canonicalPath(cutout.item);
-        }
-      }
-      const spriteBytes = await fetchSpriteBytes(spritePaths);
-
-      setStatus("Composing objectives...");
-      const catalogLookup: CatalogLookup =
-        catalog !== null
-          ? buildCatalogLookup(catalog)
-          : { findAsset: () => undefined };
-      const objectives = composeObjectives({
-        theme: activeTheme,
-        placementsByItem: placement.placementsByItem,
-        assembly,
-        catalog: catalogLookup,
-        overrides,
-      });
-
-      setStatus("Rendering PDF...");
       const { buildMazeHuntPdf } = await import("@/lib/pdf/mazeHunt");
-      const themeLabel = activeTheme.displayName;
-      const cutoutSize =
-        diff.cutoutSize === "small"
-          ? "small"
-          : diff.cutoutSize === "large"
-            ? "large"
-            : "medium";
       const pdfBytes = await buildMazeHuntPdf({
-        grid,
-        theme: { id: activeTheme.id, displayName: activeTheme.displayName },
+        grid: pipeline.snapshot.grid,
+        theme: {
+          id: activeThemeId,
+          displayName: pipeline.snapshot.themeDisplayName,
+        },
         difficulty,
-        collectibles: placement.placements,
-        placementsByItem: placement.placementsByItem,
-        boss,
-        assembly,
-        cutoutSize,
-        spriteBytes,
-        objectives,
+        collectibles: pipeline.snapshot.collectibles,
+        placementsByItem: groupPlacementsByItem(
+          pipeline.snapshot.collectibles,
+        ),
+        boss: pipeline.snapshot.boss,
+        assembly: pipeline.snapshot.assembly,
+        cutoutSize: pipeline.snapshot.cutoutSize,
+        spriteBytes: pipeline.spriteBytes,
+        objectives: pipeline.snapshot.objectives,
         blackAndWhiteSafe: bwSafe,
         splitOntoTwoPages,
         sessionLabel,
-        presetName: currentPresetId !== null ? presetName : undefined,
+        presetName:
+          currentPresetId !== null ? pipeline.snapshot.presetName : undefined,
       });
       const buffer = new ArrayBuffer(pdfBytes.byteLength);
       new Uint8Array(buffer).set(pdfBytes);
       const blob = new Blob([buffer], { type: "application/pdf" });
-      nextUrl = URL.createObjectURL(blob);
-      const filename = `${activeTheme.id}_${difficulty}_${grid.seed}.pdf`;
-      setPdf({
-        id: `${grid.seed}-${Date.now()}`,
-        url: nextUrl,
-        filename,
-        themeLabel,
-        difficulty,
-        seed: grid.seed,
-        cells: { across: grid.cellsAcross, down: grid.cellsDown },
-        walls: grid.walls.length,
-        collectibleCount: placement.totalCount,
-        hasAssembly: assembly !== undefined,
-        objectives,
-      });
-      committed = true;
-      // Generate clears the dirty flag — what's on screen now matches the
-      // editor inputs that produced it.
-      setIsDirty(false);
-      // Lock-seeds plumbing: when on and we don't yet have a frozen seed,
-      // capture the one the maze generator just used and persist it back into
-      // the loaded preset so subsequent loads reproduce the same maze.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = pipeline.filename;
+      a.rel = "noopener";
+      document.body.append(a);
+      a.click();
+      a.remove();
+      // Brief delay before revoke for Safari.
+      window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      // Lock-seeds plumbing.
       if (lockSeeds && currentPresetId !== null) {
         const presetForUpdate = loadPreset(currentPresetId);
-        if (presetForUpdate && presetForUpdate.config.runSeed !== grid.seed) {
+        if (
+          presetForUpdate &&
+          presetForUpdate.config.runSeed !== pipeline.snapshot.grid.seed
+        ) {
           const updated: MazeHuntPreset = {
             ...presetForUpdate,
             updatedAt: new Date().toISOString(),
             config: {
               ...presetForUpdate.config,
-              runSeed: grid.seed,
+              runSeed: pipeline.snapshot.grid.seed,
               lockSeeds: true,
             },
           };
           try {
             savePreset(updated);
-            setLockedRunSeed(grid.seed);
+            setLockedRunSeed(pipeline.snapshot.grid.seed);
           } catch {
-            // Quota errors here are non-fatal for the print flow; the user
-            // still gets their PDF, they just lose the byte-stable replay.
+            // Quota errors here are non-fatal.
           }
         }
-      } else if (!lockSeeds) {
-        // Make sure we don't carry a stale frozen seed when lock is off.
-        setLockedRunSeed(null);
       }
-      // Stamp last-printed on the loaded preset so the library list floats it
-      // back to the top next time Andrew opens the panel.
       if (currentPresetId !== null) {
         try {
           recordPresetPrint(currentPresetId);
@@ -543,361 +647,518 @@ export function MazeHuntPanel({
           // Non-fatal.
         }
       }
-      const mismatchCount = objectives.filter(
-        (o) => o.countMismatch !== undefined,
-      ).length;
-      const mismatchSuffix =
-        mismatchCount > 0
-          ? ` ⚠ ${mismatchCount} objective${mismatchCount === 1 ? "" : "s"} have a count mismatch — review before printing.`
-          : "";
-      setStatus(
-        `Preview ready — ${placement.totalCount} collectibles placed, ${grid.walls.length} walls, ${objectives.length} objectives. Confirm to download.${mismatchSuffix}`,
-      );
+
+      setIsDirty(false);
+      setDownloadStatus(`Downloaded ${pipeline.filename}`);
     } catch (err) {
-      if (isPuzzleError(err)) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Something went wrong rendering the worksheet.");
-      }
-      setStatus("Could not generate the worksheet.");
+      setError(
+        err instanceof Error ? err.message : "PDF rendering failed.",
+      );
+      setDownloadStatus(null);
     } finally {
-      if (!committed && nextUrl) URL.revokeObjectURL(nextUrl);
-      setIsGenerating(false);
+      setIsDownloading(false);
     }
   }
 
-  function triggerDownload(): void {
-    if (!pdf) return;
-    const a = document.createElement("a");
-    a.href = pdf.url;
-    a.download = pdf.filename;
-    a.rel = "noopener";
-    document.body.append(a);
-    a.click();
-    a.remove();
-  }
+  // ----- Render -----
 
-  // For each slot we expose at most one override input. For multi-item
-  // navigate themes (Nether), the override applies to the FIRST navigate
-  // line only — see composeObjectives() comment.
-  const editableSlots: ObjectiveSlot[] = [
-    "navigate",
-    "find",
-    "escape",
-    "craft",
-    "state-change",
-  ];
-
-  const activeThemeLabel =
-    themes.find((t) => t.id === activeThemeId)?.displayName ?? "Maze Hunt";
+  const snapshotForView = pipeline?.ok ? pipeline.snapshot : null;
+  const mismatchCount =
+    snapshotForView?.objectives.filter((o) => o.countMismatch !== undefined)
+      .length ?? 0;
 
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 lg:gap-8">
       {onBackToSelector ? (
         <button
           type="button"
           onClick={onBackToSelector}
-          className="cursor-pointer self-start text-sm font-medium text-[var(--accent)] hover:underline"
+          className="cursor-pointer self-start text-sm font-medium text-[var(--accent)] transition hover:underline"
         >
           ← Back to themes
         </button>
       ) : null}
+
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
           Maze Hunt
         </p>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight text-[var(--heading)]">
-          {activeThemeLabel} worksheet
+        <h1 className="mt-2 text-2xl font-semibold leading-tight text-[var(--heading)] sm:text-3xl">
+          {activeTheme?.displayName ?? "Loading…"} worksheet
         </h1>
-        <p className="mt-3 text-sm text-[var(--muted)]">
-          Generate a printable Letter portrait worksheet — child copy on the
-          top half, facilitator answer key on the bottom half. Adjust theme,
-          difficulty, and per-objective text below before generating.
+        <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
+          Adjust the knobs on the left and the preview on the right repaints
+          live. Re-roll for a new layout. Download when you&rsquo;re happy.
         </p>
       </div>
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm"
-        >
-          <div className="space-y-5">
-            <div>
-              <label
-                htmlFor="theme"
-                className="block text-sm font-medium text-[var(--heading)]"
-              >
-                Theme
-              </label>
-              <select
-                id="theme"
-                value={activeThemeId}
-                onChange={(e) => changeActiveTheme(e.target.value)}
-                disabled={isGenerating || themes.length === 0}
-                className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
-              >
-                {themes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.displayName}
-                  </option>
-                ))}
-              </select>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:items-start">
+        {/* Editor column */}
+        <div className="flex flex-col gap-4">
+          <ControlsCard
+            themes={themes}
+            activeThemeId={activeThemeId}
+            onThemeChange={changeActiveTheme}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficultyDirty}
+            sessionLabel={sessionLabel}
+            onSessionLabelChange={setSessionLabelDirty}
+            bwSafe={bwSafe}
+            onBwSafeChange={setBwSafeDirty}
+            splitOntoTwoPages={splitOntoTwoPages}
+            onSplitChange={setSplitDirty}
+            lockSeeds={lockSeeds}
+            onLockSeedsChange={setLockSeedsDirty}
+          />
+
+          <RollAndDownloadCard
+            onRerollMaze={rerollMaze}
+            onRerollPlacements={rerollPlacements}
+            onDownload={handleDownload}
+            disabled={!snapshotForView || !spritesLoaded}
+            isDownloading={isDownloading}
+            seed={snapshotForView?.grid.seed ?? "—"}
+            mismatchCount={mismatchCount}
+            downloadStatus={downloadStatus}
+            error={error ?? (pipeline && !pipeline.ok ? pipeline.message : null)}
+          />
+
+          <details className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm">
+            <summary className="cursor-pointer select-none text-sm font-semibold text-[var(--heading)]">
+              Objective overrides (optional)
+            </summary>
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Leave blank for theme defaults. Override text is rendered
+              verbatim. The composer flags any number that disagrees with the
+              live placement count.
+            </p>
+            <div className="mt-3 space-y-2">
+              {EDITABLE_SLOTS.map((slot) => (
+                <div key={slot} className="flex flex-col gap-1">
+                  <label
+                    htmlFor={`ov-${slot}`}
+                    className="text-xs font-medium text-[var(--muted)]"
+                  >
+                    {SLOT_LABELS[slot]}
+                  </label>
+                  <input
+                    id={`ov-${slot}`}
+                    type="text"
+                    value={overrides[slot] ?? ""}
+                    onChange={(e) => setOverrideFor(slot, e.target.value)}
+                    placeholder="(use theme default)"
+                    className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+                  />
+                </div>
+              ))}
             </div>
-            <div>
-              <label
-                htmlFor="difficulty"
-                className="block text-sm font-medium text-[var(--heading)]"
-              >
-                Difficulty
-              </label>
-              <select
-                id="difficulty"
-                value={difficulty}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  if (
-                    next === "easy" ||
-                    next === "medium" ||
-                    next === "hard"
-                  ) {
-                    setDifficultyDirty(next);
-                  }
-                }}
-                disabled={isGenerating}
-                className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="session-label"
-                className="block text-sm font-medium text-[var(--heading)]"
-              >
-                Session label (optional)
-              </label>
-              <input
-                id="session-label"
-                type="text"
-                value={sessionLabel}
-                onChange={(e) => setSessionLabelDirty(e.target.value)}
-                disabled={isGenerating}
-                placeholder="e.g. Tuesday group, Cohort A"
-                className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
+          </details>
+
+          <details className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm">
+            <summary className="cursor-pointer select-none text-sm font-semibold text-[var(--heading)]">
+              Preset library
+              {currentPresetId !== null ? (
+                <span className="ml-2 text-xs font-normal text-[var(--muted)]">
+                  loaded: {presetName}
+                  {isDirty ? " (modified)" : ""}
+                </span>
+              ) : null}
+            </summary>
+            <div className="mt-3">
+              <PresetLibrary
+                currentConfig={currentConfig}
+                isDirty={isDirty}
+                onLoad={handleLoadPreset}
               />
             </div>
-            <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={bwSafe}
-                  onChange={(e) => setBwSafeDirty(e.target.checked)}
-                  disabled={isGenerating}
-                />
-                <span>Black-and-white safe path</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={splitOntoTwoPages}
-                  onChange={(e) => setSplitDirty(e.target.checked)}
-                  disabled={isGenerating}
-                />
-                <span>Split onto two pages (answer key off-page)</span>
-              </label>
-              <label
-                className="flex items-center gap-2 text-sm"
-                title="Reproduce the exact same maze on every load. Off by default so each generate gives a fresh layout."
-              >
-                <input
-                  type="checkbox"
-                  checked={lockSeeds}
-                  onChange={(e) => setLockSeedsDirty(e.target.checked)}
-                  disabled={isGenerating}
-                />
-                <span>Lock seeds</span>
-              </label>
-            </div>
-            <details className="rounded-md border border-[var(--border)] bg-[var(--panel)] p-3 text-sm">
-              <summary className="cursor-pointer font-medium text-[var(--heading)]">
-                Objective overrides (optional)
-              </summary>
-              <p className="mt-2 text-xs text-[var(--muted)]">
-                Leave blank to use the theme defaults. Override text is
-                rendered verbatim. The composer flags any number in the
-                override that disagrees with the live placement count.
-              </p>
-              <div className="mt-3 space-y-2">
-                {editableSlots.map((slot) => (
-                  <div key={slot} className="flex flex-col gap-1">
-                    <label
-                      htmlFor={`ov-${slot}`}
-                      className="text-xs font-medium text-[var(--muted)]"
-                    >
-                      {SLOT_LABELS[slot]}
-                    </label>
-                    <input
-                      id={`ov-${slot}`}
-                      type="text"
-                      value={overrides[slot] ?? ""}
-                      onChange={(e) => setOverrideFor(slot, e.target.value)}
-                      disabled={isGenerating}
-                      placeholder="(use theme default)"
-                      className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </details>
-            <button
-              ref={generateButtonRef}
-              type="submit"
-              disabled={isGenerating || themes.length === 0}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {isGenerating ? (
-                <>
-                  <span className="davis-spinner" aria-hidden="true" />
-                  <span>Generating…</span>
-                </>
-              ) : (
-                "Generate"
-              )}
-            </button>
-          </div>
-          <div
-            aria-live="polite"
-            className="mt-4 rounded-md border border-[var(--border)] bg-[var(--panel)] px-3 py-3 text-sm leading-6"
-          >
-            <p className="font-medium text-[var(--heading)]">{status}</p>
-            {error ? (
-              <p className="mt-2 text-[var(--error)]">{error}</p>
-            ) : null}
-          </div>
-        </form>
-        <details className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm">
-          <summary className="cursor-pointer text-sm font-semibold text-[var(--heading)]">
-            Preset library
-            {currentPresetId !== null ? (
-              <span className="ml-2 text-xs font-normal text-[var(--muted)]">
-                loaded: {presetName}
-                {isDirty ? " (modified)" : ""}
-              </span>
-            ) : null}
-          </summary>
-          <div className="mt-3">
-            <PresetLibrary
-              currentConfig={currentConfig}
-              isDirty={isDirty}
-              onLoad={handleLoadPreset}
-            />
-          </div>
-        </details>
-        {pdf ? (
-          <section className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-[var(--heading)]">
-              Preview ready
-            </h2>
-            <dl className="mt-3 grid grid-cols-2 gap-3 text-sm text-[var(--foreground)]">
-              <dt className="font-medium">Theme</dt>
-              <dd>{pdf.themeLabel}</dd>
-              <dt className="font-medium">Difficulty</dt>
-              <dd>{pdf.difficulty}</dd>
-              <dt className="font-medium">Cells</dt>
-              <dd>
-                {pdf.cells.across} × {pdf.cells.down}
-              </dd>
-              <dt className="font-medium">Walls</dt>
-              <dd>{pdf.walls}</dd>
-              <dt className="font-medium">Collectibles</dt>
-              <dd>{pdf.collectibleCount}</dd>
-              <dt className="font-medium">Assembly</dt>
-              <dd>{pdf.hasAssembly ? "yes" : "no"}</dd>
-              <dt className="font-medium">Seed</dt>
-              <dd className="font-mono">{pdf.seed}</dd>
-            </dl>
-            <div className="mt-5 rounded-md border border-[var(--border)] bg-[var(--panel)] p-3">
-              <h3 className="text-sm font-semibold text-[var(--heading)]">
-                Composed objectives
-              </h3>
-              <ul className="mt-2 space-y-1.5 text-sm">
-                {pdf.objectives.map((o, i) => (
-                  <li
-                    key={`${o.slot}-${i}`}
-                    className="flex items-start gap-2"
-                  >
-                    <span
-                      className="mt-0.5 inline-block h-3 w-3 flex-shrink-0 rounded-sm border border-[var(--border)] bg-white"
-                      aria-hidden="true"
-                    />
-                    <span className="flex-1">
-                      <span className="text-xs uppercase tracking-wide text-[var(--muted)]">
-                        {SLOT_LABELS[o.slot]}
-                        {o.isOverride ? " (override)" : ""}
-                      </span>
-                      <br />
-                      <span>{o.text}</span>
-                      {o.countMismatch ? (
-                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                          <span aria-hidden="true">⚠</span>
-                          Override count{" "}
-                          {o.countMismatch.foundInOverride ?? "(none)"} /
-                          maze count {o.countMismatch.expected}
-                        </span>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button
-              type="button"
-              onClick={triggerDownload}
-              className="mt-5 cursor-pointer rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--accent-hover)]"
-            >
-              Confirm download
-            </button>
-          </section>
-        ) : null}
+          </details>
+        </div>
+
+        {/* Visualizer column */}
+        <PreviewColumn
+          snapshot={snapshotForView}
+          spriteUrls={spriteUrls}
+          spritesLoaded={spritesLoaded}
+          previewView={previewView}
+          onPreviewViewChange={setPreviewView}
+          mismatchCount={mismatchCount}
+          splitOntoTwoPages={splitOntoTwoPages}
+        />
+      </div>
     </section>
   );
 }
 
-/**
- * Resolve the static thumbnail path for a canonicalName by trying each known
- * directory. We don't have direct access to the catalog at component-mount
- * time, so we encode the slug rule (lowercase, strip parens) and rely on the
- * server to 404 when the asset is in a different directory.
- *
- * Maze Hunt v1 always uses entities for bosses (entities/), blocks for
- * collectibles (blocks/), and items only for Pixel Puzzle.
- */
-function canonicalPath(canonicalName: string): string {
-  const slug = canonicalName
-    .toLowerCase()
-    .replace(/[()]/g, "")
-    .replace(/'/g, "");
-  return resolveCanonicalDir(canonicalName, slug);
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function groupPlacementsByItem(
+  placements: Placement[],
+): Record<string, Placement[]> {
+  const grouped: Record<string, Placement[]> = {};
+  for (const p of placements) {
+    const list = grouped[p.itemRef];
+    if (list) list.push(p);
+    else grouped[p.itemRef] = [p];
+  }
+  return grouped;
 }
 
-const ENTITY_NAMES = new Set([
-  "Ender_Dragon",
-  "Wither",
-  "Elder_Guardian",
-  "Warden",
-  "Iron_Golem",
-  "Snow_Golem",
-  "Allay",
-  "Blaze",
-  "Wither_Skeleton",
-  "Skeleton",
-  "Zombie",
-  "Creeper",
-]);
+// ---------------------------------------------------------------------------
+// Controls card
+// ---------------------------------------------------------------------------
 
-function resolveCanonicalDir(canonical: string, slug: string): string {
-  if (ENTITY_NAMES.has(canonical)) return `/entities/${slug}.png`;
-  return `/blocks/${slug}.png`;
+interface ControlsCardProps {
+  themes: MazeHuntTheme[];
+  activeThemeId: string;
+  onThemeChange: (id: string) => void;
+  difficulty: DifficultyPreset;
+  onDifficultyChange: (next: DifficultyPreset) => void;
+  sessionLabel: string;
+  onSessionLabelChange: (next: string) => void;
+  bwSafe: boolean;
+  onBwSafeChange: (next: boolean) => void;
+  splitOntoTwoPages: boolean;
+  onSplitChange: (next: boolean) => void;
+  lockSeeds: boolean;
+  onLockSeedsChange: (next: boolean) => void;
+}
+
+function ControlsCard(props: ControlsCardProps) {
+  const handleDifficulty = (e: ChangeEvent<HTMLSelectElement>) => {
+    const next = e.target.value;
+    if (next === "easy" || next === "medium" || next === "hard") {
+      props.onDifficultyChange(next);
+    }
+  };
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm">
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="theme"
+              className="block text-sm font-medium text-[var(--heading)]"
+            >
+              Theme
+            </label>
+            <select
+              id="theme"
+              value={props.activeThemeId}
+              onChange={(e) => props.onThemeChange(e.target.value)}
+              disabled={props.themes.length === 0}
+              className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+            >
+              {props.themes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="difficulty"
+              className="block text-sm font-medium text-[var(--heading)]"
+            >
+              Difficulty
+            </label>
+            <select
+              id="difficulty"
+              value={props.difficulty}
+              onChange={handleDifficulty}
+              className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label
+            htmlFor="session-label"
+            className="block text-sm font-medium text-[var(--heading)]"
+          >
+            Session label (optional)
+          </label>
+          <input
+            id="session-label"
+            type="text"
+            value={props.sessionLabel}
+            onChange={(e) => props.onSessionLabelChange(e.target.value)}
+            placeholder="e.g. Tuesday group, Cohort A"
+            className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+          />
+        </div>
+        <div className="grid gap-2 pt-1">
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={props.bwSafe}
+              onChange={(e) => props.onBwSafeChange(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              <strong>Black-and-white safe path</strong>
+              <span className="block text-xs text-[var(--muted)]">
+                Recommended for school printers — replaces red answer-key line
+                with dashed black so it stays visible against the maze walls.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={props.splitOntoTwoPages}
+              onChange={(e) => props.onSplitChange(e.target.checked)}
+            />
+            <span>Split onto two pages (answer key off-page)</span>
+          </label>
+          <label
+            className="flex items-center gap-2 text-sm"
+            title="Reproduce the exact same maze on every load. Off by default so each generate gives a fresh layout."
+          >
+            <input
+              type="checkbox"
+              checked={props.lockSeeds}
+              onChange={(e) => props.onLockSeedsChange(e.target.checked)}
+            />
+            <span>Lock seeds</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Reroll + download card
+// ---------------------------------------------------------------------------
+
+interface RollAndDownloadCardProps {
+  onRerollMaze: () => void;
+  onRerollPlacements: () => void;
+  onDownload: () => void;
+  disabled: boolean;
+  isDownloading: boolean;
+  seed: string;
+  mismatchCount: number;
+  downloadStatus: string | null;
+  error: string | null;
+}
+
+function RollAndDownloadCard(props: RollAndDownloadCardProps) {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm">
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={props.onRerollMaze}
+          disabled={props.disabled}
+          className="cursor-pointer rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          ↻ Re-roll maze
+        </button>
+        <button
+          type="button"
+          onClick={props.onRerollPlacements}
+          disabled={props.disabled}
+          className="cursor-pointer rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          ↻ Re-roll items
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={props.onDownload}
+        disabled={props.disabled || props.isDownloading}
+        className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:bg-slate-400"
+      >
+        {props.isDownloading ? (
+          <>
+            <span className="davis-spinner" aria-hidden="true" />
+            <span>Rendering PDF…</span>
+          </>
+        ) : (
+          "Download PDF"
+        )}
+      </button>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--muted)]">
+        <span>
+          Seed: <span className="font-mono">{props.seed}</span>
+        </span>
+        {props.mismatchCount > 0 ? (
+          <span className="font-medium text-amber-700">
+            ⚠ {props.mismatchCount} objective
+            {props.mismatchCount === 1 ? "" : "s"} have a count mismatch
+          </span>
+        ) : null}
+      </div>
+      {props.downloadStatus ? (
+        <p
+          aria-live="polite"
+          className="mt-2 text-xs text-[var(--muted)]"
+        >
+          {props.downloadStatus}
+        </p>
+      ) : null}
+      {props.error ? (
+        <p
+          aria-live="polite"
+          className="mt-2 rounded-md border border-[var(--error)]/40 bg-[var(--error)]/5 px-2 py-1.5 text-xs text-[var(--error)]"
+        >
+          {props.error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Preview column
+// ---------------------------------------------------------------------------
+
+interface PreviewColumnProps {
+  snapshot: WorksheetSnapshot | null;
+  spriteUrls: Record<string, string>;
+  spritesLoaded: boolean;
+  previewView: "two-up" | "child" | "answer";
+  onPreviewViewChange: (next: "two-up" | "child" | "answer") => void;
+  mismatchCount: number;
+  splitOntoTwoPages: boolean;
+}
+
+function PreviewColumn({
+  snapshot,
+  spriteUrls,
+  spritesLoaded,
+  previewView,
+  onPreviewViewChange,
+  mismatchCount,
+  splitOntoTwoPages,
+}: PreviewColumnProps) {
+  // Sticky preview on wide screens — Davis sees the worksheet as he edits.
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  // Apply sticky offset on layout so it doesn't fight scroll restore.
+  useLayoutEffect(() => {
+    if (stickyRef.current) {
+      stickyRef.current.style.top = "1rem";
+    }
+  }, []);
+
+  const views: ("two-up" | "child" | "answer")[] = ["two-up", "child", "answer"];
+  const viewLabels: Record<"two-up" | "child" | "answer", string> = {
+    "two-up": "Two-up",
+    child: "Child copy",
+    answer: "Answer key",
+  };
+
+  return (
+    <div ref={stickyRef} className="lg:sticky">
+      <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-4 py-3">
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+              Preview
+            </span>
+            <span className="text-sm font-medium text-[var(--heading)]">
+              {snapshot
+                ? `${snapshot.themeDisplayName} · ${snapshot.difficulty}`
+                : "Loading…"}
+            </span>
+            {splitOntoTwoPages ? (
+              <span className="mt-0.5 text-[10px] uppercase tracking-wide text-[var(--muted)]">
+                PDF prints on 2 pages
+              </span>
+            ) : null}
+          </div>
+          <div
+            role="tablist"
+            aria-label="Preview view"
+            className="flex gap-1 rounded-md border border-[var(--border)] bg-white p-1 text-xs font-medium"
+          >
+            {views.map((v) => (
+              <button
+                key={v}
+                role="tab"
+                type="button"
+                aria-selected={previewView === v}
+                onClick={() => onPreviewViewChange(v)}
+                className={`min-h-[28px] rounded px-2.5 py-1 transition ${
+                  previewView === v
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--muted)] hover:text-[var(--heading)]"
+                }`}
+              >
+                {viewLabels[v]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bg-[var(--background)] p-3 sm:p-5">
+          {snapshot && spritesLoaded ? (
+            <MazeHuntVisualizer
+              snapshot={snapshot}
+              spriteUrls={spriteUrls}
+              view={previewView}
+            />
+          ) : (
+            <SkeletonPreview />
+          )}
+        </div>
+        {snapshot ? (
+          <div className="border-t border-[var(--border)] bg-white px-4 py-3 text-xs text-[var(--muted)]">
+            <ObjectivesInline
+              objectives={snapshot.objectives}
+              mismatchCount={mismatchCount}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonPreview() {
+  return (
+    <div
+      className="aspect-[612/792] w-full max-w-3xl animate-pulse rounded-md border border-[var(--border)] bg-white"
+      aria-label="Preview loading"
+    />
+  );
+}
+
+interface ObjectivesInlineProps {
+  objectives: Objective[];
+  mismatchCount: number;
+}
+
+function ObjectivesInline({ objectives, mismatchCount }: ObjectivesInlineProps) {
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+          Objectives ({objectives.length})
+        </span>
+        {mismatchCount > 0 ? (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900">
+            ⚠ {mismatchCount} mismatch
+          </span>
+        ) : null}
+      </div>
+      <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-xs text-[var(--foreground)]">
+        {objectives.map((o, i) => (
+          <li key={i} className={o.countMismatch ? "text-amber-700" : ""}>
+            <span className="text-[var(--muted)]">
+              [{SLOT_LABELS[o.slot]}
+              {o.isOverride ? " · override" : ""}]
+            </span>{" "}
+            {o.text}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
 }
