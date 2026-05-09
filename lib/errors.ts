@@ -3,7 +3,8 @@ export type PuzzleErrorCode =
   | "network"
   | "transparent"
   | "decode"
-  | "bad-input";
+  | "bad-input"
+  | "placement-infeasible";
 
 export class PuzzleError extends Error {
   readonly code: PuzzleErrorCode;

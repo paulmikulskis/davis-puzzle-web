@@ -3,8 +3,18 @@
 // Coordinates are cell-grid units; the caller passes a transform so the maze
 // fits inside the desired page region.
 
-import { LineCapStyle, rgb as pdfRgb, type PDFPage } from "pdf-lib";
+import {
+  LineCapStyle,
+  rgb as pdfRgb,
+  type PDFImage,
+  type PDFPage,
+} from "pdf-lib";
 import type { MazeCell, MazeGrid, WallSegment } from "@/lib/maze";
+
+export interface CellSprite {
+  cell: MazeCell;
+  image: PDFImage;
+}
 
 export interface MazeRenderRect {
   /** Bottom-left of the maze region in PDF points. */
@@ -62,70 +72,69 @@ export function computeMazeMetrics(
 }
 
 /**
- * Map a wall segment in cell-grid units to PDF-points coordinates.
- * Grid (x, y) origin is top-left, y growing downward; PDF origin is bottom-
- * left, y growing upward. We flip y on the way out.
+ * Map a wall segment in cell-grid units to SVG-native (Y-down) coordinates
+ * relative to the maze top-left. pdf-lib's drawSvgPath flips Y for us.
  */
-function wallToPdf(
+function wallToSvg(
   seg: WallSegment,
   m: CellMetrics,
-  cellsDown: number,
 ): { x1: number; y1: number; x2: number; y2: number } {
-  const x1 = m.originX + seg.x1 * m.cell;
-  const x2 = m.originX + seg.x2 * m.cell;
-  // Flip y: grid y=0 is top, so PDF y = originY + (cellsDown - gridY) * cell
-  const y1 = m.originY + (cellsDown - seg.y1) * m.cell;
-  const y2 = m.originY + (cellsDown - seg.y2) * m.cell;
-  return { x1, y1, x2, y2 };
+  return {
+    x1: seg.x1 * m.cell,
+    y1: seg.y1 * m.cell,
+    x2: seg.x2 * m.cell,
+    y2: seg.y2 * m.cell,
+  };
 }
 
-function cellCenterPdf(
+function cellCenterSvg(
   cell: MazeCell,
   m: CellMetrics,
-  cellsDown: number,
 ): { x: number; y: number } {
-  const x = m.originX + (cell.x + 0.5) * m.cell;
-  const y = m.originY + (cellsDown - cell.y - 0.5) * m.cell;
-  return { x, y };
+  return {
+    x: (cell.x + 0.5) * m.cell,
+    y: (cell.y + 0.5) * m.cell,
+  };
 }
 
-/**
- * Build an SVG path string from a list of wall segments. Each segment becomes
- * an `M x1 y1 L x2 y2` pair. Coordinates are absolute PDF points.
- */
-function wallsToSvgPath(
-  walls: WallSegment[],
-  m: CellMetrics,
-  cellsDown: number,
-): string {
+/** PDF-points x/y origin to pass to drawSvgPath so SVG (0,0) lands at the
+ * top-left of the maze region. The internal scale(1,-1) flips Y. */
+function svgOrigin(m: CellMetrics, drawnHeight: number): { x: number; y: number } {
+  return { x: m.originX, y: m.originY + drawnHeight };
+}
+
+function wallsToSvgPath(walls: WallSegment[], m: CellMetrics): string {
   const parts: string[] = [];
   for (const seg of walls) {
-    const { x1, y1, x2, y2 } = wallToPdf(seg, m, cellsDown);
+    const { x1, y1, x2, y2 } = wallToSvg(seg, m);
     parts.push(`M ${x1.toFixed(3)} ${y1.toFixed(3)} L ${x2.toFixed(3)} ${y2.toFixed(3)}`);
   }
   return parts.join(" ");
 }
 
-function solutionPathToSvgPath(
-  path: MazeCell[],
-  m: CellMetrics,
-  cellsDown: number,
-): string {
+function solutionPathToSvgPath(path: MazeCell[], m: CellMetrics): string {
   if (path.length === 0) return "";
   const first = path[0];
   if (!first) return "";
-  const start = cellCenterPdf(first, m, cellsDown);
+  const start = cellCenterSvg(first, m);
   const parts: string[] = [`M ${start.x.toFixed(3)} ${start.y.toFixed(3)}`];
   for (let i = 1; i < path.length; i += 1) {
     const c = path[i];
     if (!c) continue;
-    const p = cellCenterPdf(c, m, cellsDown);
+    const p = cellCenterSvg(c, m);
     parts.push(`L ${p.x.toFixed(3)} ${p.y.toFixed(3)}`);
   }
   return parts.join(" ");
 }
 
-/** Build a small filled triangle (chevron/arrowhead) SVG path. */
+/**
+ * Build a small filled triangle (chevron/arrowhead) SVG path. (x, y) is the
+ * anchor in SVG-native coords (Y-down). Direction is in the *visual* sense
+ * once the renderer flips Y.
+ *
+ * Visual mapping (Y-down SVG): "N" = tip points up = smaller y; "S" = tip
+ * points down = larger y; "E" = tip points right; "W" = tip points left.
+ */
 function chevronSvgPath(
   x: number,
   y: number,
@@ -140,13 +149,13 @@ function chevronSvgPath(
   let p3x = 0;
   let p3y = 0;
   if (direction === "N") {
-    p1x = x; p1y = y + half;
-    p2x = x - half; p2y = y - half;
-    p3x = x + half; p3y = y - half;
-  } else if (direction === "S") {
     p1x = x; p1y = y - half;
     p2x = x - half; p2y = y + half;
     p3x = x + half; p3y = y + half;
+  } else if (direction === "S") {
+    p1x = x; p1y = y + half;
+    p2x = x - half; p2y = y - half;
+    p3x = x + half; p3y = y - half;
   } else if (direction === "E") {
     p1x = x + half; p1y = y;
     p2x = x - half; p2y = y - half;
@@ -204,6 +213,34 @@ export interface MazeRenderResult {
 }
 
 /**
+ * Stamp a collectible / boss sprite at the center of a maze cell. Sprite size
+ * clamps to ≤ 80% of cell width so it doesn't kiss the corridor walls.
+ *
+ * `drawImage` lives outside drawSvgPath's Y-flip, so we compute PDF-native
+ * (Y-up) coords here directly.
+ */
+export function drawSpriteAtCell(
+  page: PDFPage,
+  sprite: PDFImage,
+  cell: MazeCell,
+  metrics: CellMetrics,
+  cellsDown: number,
+  scale = 0.8,
+): void {
+  const centerX = metrics.originX + (cell.x + 0.5) * metrics.cell;
+  const centerY = metrics.originY + (cellsDown - cell.y - 0.5) * metrics.cell;
+  const target = metrics.cell * scale;
+  const ratio = sprite.width / sprite.height;
+  let drawW = target;
+  let drawH = target;
+  if (ratio > 1) drawH = target / ratio;
+  else if (ratio < 1) drawW = target * ratio;
+  const x = centerX - drawW / 2;
+  const y = centerY - drawH / 2;
+  page.drawImage(sprite, { x, y, width: drawW, height: drawH });
+}
+
+/**
  * Render the maze onto a PDF page. Returns the metrics so the caller can
  * stamp icons (collectibles, boss) at the same coordinates.
  */
@@ -227,10 +264,14 @@ export function renderMaze(
     else interiorWalls.push(w);
   }
 
+  const origin = svgOrigin(metrics, metrics.drawnHeight);
+
   // Boundary walls — heavier stroke.
   if (boundaryWalls.length > 0) {
-    const path = wallsToSvgPath(boundaryWalls, metrics, grid.cellsDown);
+    const path = wallsToSvgPath(boundaryWalls, metrics);
     page.drawSvgPath(path, {
+      x: origin.x,
+      y: origin.y,
       borderColor: BLACK,
       borderWidth: boundaryWidth,
       borderLineCap: LineCapStyle.Projecting,
@@ -239,8 +280,10 @@ export function renderMaze(
 
   // Interior walls.
   if (interiorWalls.length > 0) {
-    const path = wallsToSvgPath(interiorWalls, metrics, grid.cellsDown);
+    const path = wallsToSvgPath(interiorWalls, metrics);
     page.drawSvgPath(path, {
+      x: origin.x,
+      y: origin.y,
       borderColor: BLACK,
       borderWidth: interiorWidth,
       borderLineCap: LineCapStyle.Projecting,
@@ -249,13 +292,11 @@ export function renderMaze(
 
   // Solution path (answer key).
   if (showSolution && grid.solutionPath.length > 1) {
-    const solutionSvg = solutionPathToSvgPath(
-      grid.solutionPath,
-      metrics,
-      grid.cellsDown,
-    );
+    const solutionSvg = solutionPathToSvgPath(grid.solutionPath, metrics);
     if (bw) {
       page.drawSvgPath(solutionSvg, {
+        x: origin.x,
+        y: origin.y,
         borderColor: BLACK,
         borderWidth: 1.0,
         borderDashArray: [6, 4],
@@ -265,6 +306,8 @@ export function renderMaze(
       });
     } else {
       page.drawSvgPath(solutionSvg, {
+        x: origin.x,
+        y: origin.y,
         borderColor: RED,
         borderWidth: 1.5,
         borderLineCap: LineCapStyle.Round,
@@ -278,24 +321,27 @@ export function renderMaze(
     const entranceDir = arrowDirectionForBoundaryCell(grid, grid.entrance);
     const exitDir = arrowDirectionForBoundaryCell(grid, grid.exit);
     const arrowSize = Math.max(6, metrics.cell * 0.55);
-    const entCenter = cellCenterPdf(grid.entrance, metrics, grid.cellsDown);
-    const exitCenter = cellCenterPdf(grid.exit, metrics, grid.cellsDown);
-    // Place the arrow just outside the boundary. Move opposite to direction.
+    const entCenter = cellCenterSvg(grid.entrance, metrics);
+    const exitCenter = cellCenterSvg(grid.exit, metrics);
+    // Move the arrow just outside the boundary along the inward direction
+    // (in SVG-down coords: N = smaller y, S = larger y).
     const offset = metrics.cell * 0.85;
     const entAnchor = { x: entCenter.x, y: entCenter.y };
     const exitAnchor = { x: exitCenter.x, y: exitCenter.y };
-    if (entranceDir === "S") entAnchor.y += offset;
-    else if (entranceDir === "N") entAnchor.y -= offset;
+    if (entranceDir === "S") entAnchor.y -= offset;
+    else if (entranceDir === "N") entAnchor.y += offset;
     else if (entranceDir === "E") entAnchor.x -= offset;
     else entAnchor.x += offset;
-    if (exitDir === "S") exitAnchor.y += offset;
-    else if (exitDir === "N") exitAnchor.y -= offset;
+    if (exitDir === "S") exitAnchor.y -= offset;
+    else if (exitDir === "N") exitAnchor.y += offset;
     else if (exitDir === "E") exitAnchor.x -= offset;
     else exitAnchor.x += offset;
 
     page.drawSvgPath(
       chevronSvgPath(entAnchor.x, entAnchor.y, entranceDir, arrowSize),
       {
+        x: origin.x,
+        y: origin.y,
         color: bw ? BLACK : pdfRgb(0.16, 0.39, 0.85),
         borderColor: bw ? BLACK : pdfRgb(0.16, 0.39, 0.85),
         borderWidth: 0.8,
@@ -305,6 +351,8 @@ export function renderMaze(
     page.drawSvgPath(
       chevronSvgPath(exitAnchor.x, exitAnchor.y, exitDir, arrowSize),
       {
+        x: origin.x,
+        y: origin.y,
         color: bw ? BLACK : RED,
         borderColor: bw ? BLACK : RED,
         borderWidth: 0.8,
