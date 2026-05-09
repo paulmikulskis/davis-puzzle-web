@@ -24,8 +24,10 @@ import {
   type CellCountPreset,
   type MazeCell,
   type MazeGrid,
+  type MazeStyle,
   type Silhouette,
 } from "@/lib/maze";
+import type { MazeSilhouette } from "@/lib/mazeHuntThemes";
 import { generateSeed } from "@/lib/maze/rng";
 import { placeCollectibles, type Placement } from "@/lib/placement";
 import { assemblyIdFromKey, getAssembly } from "@/lib/assemblies";
@@ -60,8 +62,8 @@ import {
 // Theme → maze plumbing
 // ---------------------------------------------------------------------------
 
-function silhouetteForTheme(
-  theme: MazeHuntTheme,
+function silhouetteForKind(
+  kind: MazeSilhouette,
   preset: DifficultyPreset,
 ): { silhouette: Silhouette; preset: CellCountPreset } {
   const presetMap: Record<DifficultyPreset, CellCountPreset> = {
@@ -70,7 +72,7 @@ function silhouetteForTheme(
     hard: "large",
   };
   const cellPreset = presetMap[preset];
-  if (theme.silhouette === "rectangle") {
+  if (kind === "rectangle" || kind === "rounded-rectangle") {
     const dims =
       cellPreset === "small"
         ? { width: 12, height: 16 }
@@ -82,22 +84,52 @@ function silhouetteForTheme(
       preset: cellPreset,
     };
   }
-  if (theme.silhouette === "circle") {
+  if (kind === "circle") {
     const d = cellPreset === "small" ? 14 : cellPreset === "medium" ? 18 : 22;
     return { silhouette: { kind: "circle", diameter: d }, preset: cellPreset };
   }
-  // diamond-star → maze generator's star4
-  const d = cellPreset === "small" ? 14 : cellPreset === "medium" ? 18 : 22;
-  return { silhouette: { kind: "star4", boundingBox: d }, preset: cellPreset };
+  if (kind === "diamond-star") {
+    const d = cellPreset === "small" ? 14 : cellPreset === "medium" ? 18 : 22;
+    return {
+      silhouette: { kind: "star4", boundingBox: d },
+      preset: cellPreset,
+    };
+  }
+  if (kind === "hexagon") {
+    const d = cellPreset === "small" ? 16 : cellPreset === "medium" ? 20 : 24;
+    return {
+      silhouette: { kind: "hexagon", boundingBox: d },
+      preset: cellPreset,
+    };
+  }
+  if (kind === "ring") {
+    const d = cellPreset === "small" ? 16 : cellPreset === "medium" ? 20 : 24;
+    return { silhouette: { kind: "ring", boundingBox: d }, preset: cellPreset };
+  }
+  if (kind === "plus") {
+    const d = cellPreset === "small" ? 16 : cellPreset === "medium" ? 20 : 24;
+    return { silhouette: { kind: "plus", boundingBox: d }, preset: cellPreset };
+  }
+  // oval — landscape ellipse
+  const dims =
+    cellPreset === "small"
+      ? { width: 16, height: 12 }
+      : cellPreset === "medium"
+        ? { width: 20, height: 16 }
+        : { width: 24, height: 20 };
+  return {
+    silhouette: { kind: "oval", width: dims.width, height: dims.height },
+    preset: cellPreset,
+  };
 }
 
-function defaultEntranceFor(theme: MazeHuntTheme): CardinalPosition {
-  if (theme.silhouette === "diamond-star") return "N";
+function defaultEntranceForKind(kind: MazeSilhouette): CardinalPosition {
+  if (kind === "diamond-star") return "N";
   return "S";
 }
 
-function defaultExitFor(theme: MazeHuntTheme): CardinalPosition {
-  if (theme.silhouette === "diamond-star") return "S";
+function defaultExitForKind(kind: MazeSilhouette): CardinalPosition {
+  if (kind === "diamond-star") return "S";
   return "N";
 }
 
@@ -221,6 +253,9 @@ export function MazeHuntPanel({
     Partial<Record<ObjectiveSlot, string>>
   >({});
   const [lockSeeds, setLockSeeds] = useState(false);
+  const [mazeStyle, setMazeStyle] = useState<MazeStyle>("labyrinth");
+  const [silhouetteOverride, setSilhouetteOverride] =
+    useState<MazeSilhouette | null>(null);
 
   const [configSeed, setConfigSeed] = useState<string>(() => generateSeed());
   const [placementSalt, setPlacementSalt] = useState<string>(() => "P");
@@ -359,17 +394,20 @@ export function MazeHuntPanel({
   const pipeline: PipelineResult | PipelineError | null = useMemo(() => {
     if (!activeTheme) return null;
     try {
-      const { silhouette, preset } = silhouetteForTheme(
-        activeTheme,
+      const effectiveSilhouette: MazeSilhouette =
+        silhouetteOverride ?? activeTheme.silhouette;
+      const { silhouette, preset } = silhouetteForKind(
+        effectiveSilhouette,
         difficulty,
       );
       const seedToUse = lockSeeds && lockedRunSeed ? lockedRunSeed : configSeed;
       const grid = generateMaze({
         silhouette,
         cellCountPreset: preset,
-        entrance: defaultEntranceFor(activeTheme),
-        exit: defaultExitFor(activeTheme),
+        entrance: defaultEntranceForKind(effectiveSilhouette),
+        exit: defaultExitForKind(effectiveSilhouette),
         seed: seedToUse,
+        style: mazeStyle,
       });
 
       const diff = activeTheme.difficulties[difficulty];
@@ -460,6 +498,8 @@ export function MazeHuntPanel({
     spriteBytes,
     currentPresetId,
     presetName,
+    mazeStyle,
+    silhouetteOverride,
   ]);
 
   // ----- Mutators (each one marks dirty so PresetLibrary knows) -----
@@ -467,6 +507,17 @@ export function MazeHuntPanel({
   function changeActiveTheme(nextThemeId: string): void {
     setActiveThemeId(nextThemeId);
     setOverrides({});
+    setSilhouetteOverride(null);
+    setIsDirty(true);
+  }
+
+  function setMazeStyleDirty(next: MazeStyle): void {
+    setMazeStyle(next);
+    setIsDirty(true);
+  }
+
+  function setSilhouetteOverrideDirty(next: MazeSilhouette | null): void {
+    setSilhouetteOverride(next);
     setIsDirty(true);
   }
 
@@ -534,6 +585,8 @@ export function MazeHuntPanel({
     setLockSeeds(preset.config.lockSeeds);
     setConfigSeed(preset.config.configSeed);
     setLockedRunSeed(preset.config.runSeed ?? null);
+    setMazeStyle(preset.config.mazeStyle ?? "labyrinth");
+    setSilhouetteOverride(preset.config.silhouetteOverride ?? null);
     setCurrentPresetId(preset.id);
     setPresetName(preset.name);
     setIsDirty(false);
@@ -559,6 +612,8 @@ export function MazeHuntPanel({
       runSeed: lockSeeds && lockedRunSeed ? lockedRunSeed : undefined,
       lockSeeds,
       sessionLabel,
+      mazeStyle,
+      silhouetteOverride: silhouetteOverride ?? undefined,
     };
   }, [
     activeThemeId,
@@ -570,6 +625,8 @@ export function MazeHuntPanel({
     lockSeeds,
     lockedRunSeed,
     sessionLabel,
+    mazeStyle,
+    silhouetteOverride,
   ]);
 
   // ----- Download PDF from the live snapshot -----
@@ -709,6 +766,11 @@ export function MazeHuntPanel({
             onSplitChange={setSplitDirty}
             lockSeeds={lockSeeds}
             onLockSeedsChange={setLockSeedsDirty}
+            mazeStyle={mazeStyle}
+            onMazeStyleChange={setMazeStyleDirty}
+            silhouetteOverride={silhouetteOverride}
+            onSilhouetteOverrideChange={setSilhouetteOverrideDirty}
+            themeSilhouette={activeTheme?.silhouette ?? "circle"}
           />
 
           <RollAndDownloadCard
@@ -823,6 +885,39 @@ interface ControlsCardProps {
   onSplitChange: (next: boolean) => void;
   lockSeeds: boolean;
   onLockSeedsChange: (next: boolean) => void;
+  mazeStyle: MazeStyle;
+  onMazeStyleChange: (next: MazeStyle) => void;
+  silhouetteOverride: MazeSilhouette | null;
+  onSilhouetteOverrideChange: (next: MazeSilhouette | null) => void;
+  themeSilhouette: MazeSilhouette;
+}
+
+const MAZE_STYLE_OPTIONS: { value: MazeStyle; label: string; hint: string }[] = [
+  {
+    value: "labyrinth",
+    label: "Labyrinth",
+    hint: "Long winding corridors",
+  },
+  { value: "balanced", label: "Balanced", hint: "Even branching" },
+  { value: "branchy", label: "Branchy", hint: "Many short dead-ends" },
+];
+
+const SILHOUETTE_OPTIONS: { value: MazeSilhouette; label: string }[] = [
+  { value: "circle", label: "Circle" },
+  { value: "rectangle", label: "Rectangle" },
+  { value: "diamond-star", label: "4-point star" },
+  { value: "hexagon", label: "Hexagon" },
+  { value: "ring", label: "Ring (donut)" },
+  { value: "plus", label: "Plus" },
+  { value: "oval", label: "Oval" },
+];
+
+function silhouetteLabel(s: MazeSilhouette): string {
+  return SILHOUETTE_OPTIONS.find((o) => o.value === s)?.label ?? s;
+}
+
+function isMazeSilhouetteValue(value: string): value is MazeSilhouette {
+  return SILHOUETTE_OPTIONS.some((o) => o.value === value);
 }
 
 function ControlsCard(props: ControlsCardProps) {
@@ -875,6 +970,76 @@ function ControlsCard(props: ControlsCardProps) {
               <option value="hard">Hard</option>
             </select>
           </div>
+        </div>
+        <div>
+          <label
+            htmlFor="maze-style"
+            className="block text-sm font-medium text-[var(--heading)]"
+          >
+            Maze style
+          </label>
+          <div
+            id="maze-style"
+            role="radiogroup"
+            aria-label="Maze style"
+            className="mt-1.5 grid grid-cols-3 gap-1 rounded-md border border-[var(--border)] bg-[var(--panel)] p-1"
+          >
+            {MAZE_STYLE_OPTIONS.map((opt) => {
+              const active = props.mazeStyle === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => props.onMazeStyleChange(opt.value)}
+                  className={`flex flex-col items-center gap-0.5 rounded px-2 py-1.5 text-xs font-medium transition ${
+                    active
+                      ? "bg-[var(--accent)] text-white"
+                      : "text-[var(--muted)] hover:bg-white hover:text-[var(--heading)]"
+                  }`}
+                  title={opt.hint}
+                >
+                  <span>{opt.label}</span>
+                  <span
+                    className={`text-[10px] font-normal ${
+                      active ? "text-white/80" : "text-[var(--muted)]"
+                    }`}
+                  >
+                    {opt.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <label
+            htmlFor="silhouette"
+            className="block text-sm font-medium text-[var(--heading)]"
+          >
+            Silhouette
+          </label>
+          <select
+            id="silhouette"
+            value={props.silhouetteOverride ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "") props.onSilhouetteOverrideChange(null);
+              else if (isMazeSilhouetteValue(v))
+                props.onSilhouetteOverrideChange(v);
+            }}
+            className="mt-1.5 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base transition focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)]"
+          >
+            <option value="">
+              Theme default ({silhouetteLabel(props.themeSilhouette)})
+            </option>
+            {SILHOUETTE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label

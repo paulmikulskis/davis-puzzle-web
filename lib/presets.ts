@@ -73,6 +73,18 @@ export interface MazeHuntPresetConfig {
   runSeed?: string;
   lockSeeds: boolean;
   sessionLabel: string;
+  /** Maze carving algorithm. Optional for back-compat with v1 presets. */
+  mazeStyle?: "labyrinth" | "balanced" | "branchy";
+  /** Optional silhouette override. When unset, uses the theme default. */
+  silhouetteOverride?:
+    | "circle"
+    | "rectangle"
+    | "diamond-star"
+    | "rounded-rectangle"
+    | "hexagon"
+    | "ring"
+    | "plus"
+    | "oval";
 }
 
 export interface MazeHuntPreset {
@@ -130,6 +142,27 @@ function isOverridesMap(value: unknown): value is Record<string, string> {
   return true;
 }
 
+function isMazeStyle(
+  value: unknown,
+): value is "labyrinth" | "balanced" | "branchy" {
+  return value === "labyrinth" || value === "balanced" || value === "branchy";
+}
+
+function isSilhouetteOverride(
+  value: unknown,
+): value is NonNullable<MazeHuntPresetConfig["silhouetteOverride"]> {
+  return (
+    value === "circle" ||
+    value === "rectangle" ||
+    value === "diamond-star" ||
+    value === "rounded-rectangle" ||
+    value === "hexagon" ||
+    value === "ring" ||
+    value === "plus" ||
+    value === "oval"
+  );
+}
+
 function isPresetConfig(value: unknown): value is MazeHuntPresetConfig {
   if (!isStringRecord(value)) return false;
   if (typeof value.themeId !== "string") return false;
@@ -141,6 +174,15 @@ function isPresetConfig(value: unknown): value is MazeHuntPresetConfig {
   if (!isOptionalString(value.runSeed)) return false;
   if (typeof value.lockSeeds !== "boolean") return false;
   if (typeof value.sessionLabel !== "string") return false;
+  if (value.mazeStyle !== undefined && !isMazeStyle(value.mazeStyle)) {
+    return false;
+  }
+  if (
+    value.silhouetteOverride !== undefined &&
+    !isSilhouetteOverride(value.silhouetteOverride)
+  ) {
+    return false;
+  }
   return true;
 }
 

@@ -53,6 +53,100 @@ export function circle(cellsAcross: number): boolean[][] {
   return out;
 }
 
+/** Flat-top regular hexagon. cellsAcross is the horizontal span (vertex to
+ *  vertex); cellsDown is derived as round(cellsAcross * sqrt(3)/2). */
+export function hexagon(cellsAcross: number): boolean[][] {
+  const w = cellsAcross;
+  const h = Math.max(2, Math.round(cellsAcross * (Math.sqrt(3) / 2)));
+  const out = makeFalseGrid(h, w);
+  const cx = w / 2;
+  const cy = h / 2;
+  const R = w / 2;
+  // Slanted-edge clipping for a flat-top hexagon: |dy|/h + |dx|/R <= 1.
+  // The bounding box already constrains |dx| <= R and |dy| <= h/2, so we
+  // only check the slanted edges.
+  for (let y = 0; y < h; y++) {
+    const row = out[y];
+    if (!row) continue;
+    for (let x = 0; x < w; x++) {
+      const dx = Math.abs(x + 0.5 - cx);
+      const dy = Math.abs(y + 0.5 - cy);
+      if (dy / h + dx / R <= 1 + 1e-6) {
+        row[x] = true;
+      }
+    }
+  }
+  return out;
+}
+
+/** Annular ring (donut) — boss occupies the central hole. innerRatio is
+ *  the inner-radius fraction of the outer (default 0.34). */
+export function ring(cellsAcross: number, innerRatio = 0.34): boolean[][] {
+  const N = cellsAcross;
+  const out = makeFalseGrid(N, N);
+  const cx = (N - 1) / 2;
+  const cy = (N - 1) / 2;
+  const rOuter = N / 2 - 0.5;
+  const rInner = Math.max(1, rOuter * innerRatio);
+  for (let y = 0; y < N; y++) {
+    const row = out[y];
+    if (!row) continue;
+    for (let x = 0; x < N; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= rOuter + 1e-6 && dist >= rInner - 1e-6) {
+        row[x] = true;
+      }
+    }
+  }
+  return out;
+}
+
+/** Plus / cross shape. barWidthFraction sets the thickness of each arm
+ *  (default 0.42 of cellsAcross). The arms reach the bounding-box edges. */
+export function plus(cellsAcross: number, barWidthFraction = 0.42): boolean[][] {
+  const N = cellsAcross;
+  const out = makeFalseGrid(N, N);
+  const cx = N / 2;
+  const cy = N / 2;
+  const halfBar = (N * barWidthFraction) / 2;
+  for (let y = 0; y < N; y++) {
+    const row = out[y];
+    if (!row) continue;
+    for (let x = 0; x < N; x++) {
+      const dx = Math.abs(x + 0.5 - cx);
+      const dy = Math.abs(y + 0.5 - cy);
+      if (dx <= halfBar + 1e-6 || dy <= halfBar + 1e-6) {
+        row[x] = true;
+      }
+    }
+  }
+  return out;
+}
+
+/** Ellipse / oval. Pass distinct width and height for non-circular shape.
+ *  cellsAcross becomes the long axis when height < width (landscape). */
+export function oval(width: number, height: number): boolean[][] {
+  const out = makeFalseGrid(height, width);
+  const cx = (width - 1) / 2;
+  const cy = (height - 1) / 2;
+  const Rx = width / 2;
+  const Ry = height / 2;
+  for (let y = 0; y < height; y++) {
+    const row = out[y];
+    if (!row) continue;
+    for (let x = 0; x < width; x++) {
+      const dx = (x - cx) / Rx;
+      const dy = (y - cy) / Ry;
+      if (dx * dx + dy * dy <= 1 + 1e-3) {
+        row[x] = true;
+      }
+    }
+  }
+  return out;
+}
+
 export function star4(cellsAcross: number): boolean[][] {
   // 4-point star = union of two axis-aligned squares rotated 45° relative to
   // each other. Per the spec (planning §3.2 + §7.4):
