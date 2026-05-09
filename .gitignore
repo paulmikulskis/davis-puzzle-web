@@ -48,3 +48,6 @@ roadmap.*.json
 
 # wiki scrape cache for scripts/build-catalog.ts
 /.cache/
+
+# local planning/research artifacts (intermediates for plan.md)
+/planning/

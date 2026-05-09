@@ -5,7 +5,7 @@ Read it before changing code.
 
 ## Project Summary
 
-This repository is the browser-deployed web port of Andrew Davis's Minecraft
+This repository is the browser-deployed web port of Davis Rioux's Minecraft
 Pixel Art Puzzle generator. Andrew is an occupational therapist who uses
 Minecraft inventory textures to create 16x16 pixel-art coloring worksheets for
 therapy sessions. The worksheets train hand-eye coordination, visual-spatial
@@ -89,9 +89,14 @@ features. They are not incidental implementation details.
   `RESEND_API_KEY` (required) and `RESEND_FROM_EMAIL` (optional) and degrades
   to a friendly "unavailable" response when the API key is missing — see
   Email Delivery Contract below.
-- No custom asset/fonts for PDF rendering.
+- No custom **font files** for PDF rendering. (Static PNG block / entity art
+  built into `public/blocks/` and `public/entities/` from the wiki at build
+  time is in scope — see Maze Hunt notes below.)
 - No A4 mode.
-- No 5th page.
+- **Pixel Puzzle PDF contract: exactly four pages, no 5th page.** This rule
+  is Pixel Puzzle-specific. Maze Hunt is a different PDF class with one
+  worksheet per PDF (one page when child + answer are co-located, two pages
+  when split, N pages for batch print).
 - No query-string deep links unless explicitly requested later.
 - Do not mutate the Python reference folder.
 

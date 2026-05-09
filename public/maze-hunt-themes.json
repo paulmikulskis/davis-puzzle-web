@@ -1,0 +1,189 @@
+[
+  {
+    "id": "end-island",
+    "version": 1,
+    "displayName": "End Island",
+    "shortDescription": "Slay the Ender Dragon. Climb obsidian pillars.",
+    "thumbnailPath": "/themes/end-island.png",
+    "accentColor": "#5b3a8a",
+    "silhouette": "circle",
+    "collectibles": [
+      {
+        "canonicalName": "End_Crystal",
+        "displayLabel": "ender crystal"
+      }
+    ],
+    "boss": {
+      "canonicalName": "Ender_Dragon",
+      "displayLabel": "Ender Dragon",
+      "placement": "center"
+    },
+    "assembly": {
+      "key": "obsidian-pillar-ladder",
+      "defaultFillItem": "Ladder",
+      "cutoutItem": "Ladder"
+    },
+    "objectives": {
+      "collectTemplate": "Navigate to all {count} ender crystals.",
+      "bossTemplate": "Enter the center of the maze and slay the Ender Dragon.",
+      "escapeTemplate": "Escape the maze.",
+      "assembleTemplate": "Cut out the ladders and glue them on the pillar."
+    },
+    "difficulties": {
+      "easy": {
+        "cellsPerSide": 12,
+        "corridorDensity": "sparse",
+        "collectibleCount": 4,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 4,
+        "cutoutSize": "large",
+        "objectiveCount": 3
+      },
+      "medium": {
+        "cellsPerSide": 16,
+        "corridorDensity": "medium",
+        "collectibleCount": 6,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 5,
+        "cutoutSize": "medium",
+        "objectiveCount": 4
+      },
+      "hard": {
+        "cellsPerSide": 20,
+        "corridorDensity": "dense",
+        "collectibleCount": 8,
+        "collectiblesAllOnPath": false,
+        "cutoutCount": 6,
+        "cutoutSize": "small",
+        "objectiveCount": 4
+      }
+    },
+    "defaultDifficulty": "medium"
+  },
+  {
+    "id": "nether",
+    "version": 1,
+    "displayName": "Nether",
+    "shortDescription": "Summon the Wither. Place soul sand and skulls.",
+    "thumbnailPath": "/themes/nether.png",
+    "accentColor": "#7a1f1f",
+    "silhouette": "diamond-star",
+    "collectibles": [
+      {
+        "canonicalName": "Wither_Skeleton_Skull",
+        "displayLabel": "wither skull"
+      },
+      {
+        "canonicalName": "Soul_Sand",
+        "displayLabel": "soul sand"
+      }
+    ],
+    "boss": {
+      "canonicalName": "Wither",
+      "displayLabel": "Wither",
+      "placement": "corner-sw"
+    },
+    "assembly": {
+      "key": "wither-summon-t",
+      "defaultFillItem": "Soul_Sand",
+      "cutoutItem": "Soul_Sand"
+    },
+    "objectives": {
+      "collectTemplate": "Collect {count} wither skulls.",
+      "bossTemplate": "Find the Wither boss and arrange the summon T.",
+      "escapeTemplate": "Escape the Nether maze.",
+      "assembleTemplate": "Cut out the soul sand and skulls. Glue them in the canonical Wither summon T."
+    },
+    "difficulties": {
+      "easy": {
+        "cellsPerSide": 14,
+        "corridorDensity": "sparse",
+        "collectibleCount": 4,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 4,
+        "cutoutSize": "large",
+        "objectiveCount": 3
+      },
+      "medium": {
+        "cellsPerSide": 18,
+        "corridorDensity": "medium",
+        "collectibleCount": 7,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 7,
+        "cutoutSize": "medium",
+        "objectiveCount": 4
+      },
+      "hard": {
+        "cellsPerSide": 22,
+        "corridorDensity": "dense",
+        "collectibleCount": 9,
+        "collectiblesAllOnPath": false,
+        "cutoutCount": 7,
+        "cutoutSize": "small",
+        "objectiveCount": 4
+      }
+    },
+    "defaultDifficulty": "medium"
+  },
+  {
+    "id": "ocean-monument",
+    "version": 1,
+    "displayName": "Ocean Monument",
+    "shortDescription": "Dry the sponges. Defeat the Elder Guardian.",
+    "thumbnailPath": "/themes/ocean-monument.png",
+    "accentColor": "#1f4f7a",
+    "silhouette": "rectangle",
+    "collectibles": [
+      {
+        "canonicalName": "Wet_Sponge",
+        "displayLabel": "wet sponge"
+      }
+    ],
+    "boss": {
+      "canonicalName": "Elder_Guardian",
+      "displayLabel": "Elder Guardian",
+      "placement": "center"
+    },
+    "assembly": {
+      "key": "hopper-furnace",
+      "defaultFillItem": "Wet_Sponge",
+      "cutoutItem": "Wet_Sponge"
+    },
+    "objectives": {
+      "collectTemplate": "Collect {count} wet sponges.",
+      "bossTemplate": "Find the Elder Guardian at the center of the maze.",
+      "escapeTemplate": "Escape the Ocean Monument.",
+      "assembleTemplate": "Cut out the wet sponges. Place them in the hopper. Watch them dry into the furnace."
+    },
+    "difficulties": {
+      "easy": {
+        "cellsPerSide": 12,
+        "corridorDensity": "sparse",
+        "collectibleCount": 6,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 10,
+        "cutoutSize": "large",
+        "objectiveCount": 3
+      },
+      "medium": {
+        "cellsPerSide": 16,
+        "corridorDensity": "medium",
+        "collectibleCount": 8,
+        "collectiblesAllOnPath": true,
+        "cutoutCount": 10,
+        "cutoutSize": "medium",
+        "objectiveCount": 4
+      },
+      "hard": {
+        "cellsPerSide": 20,
+        "corridorDensity": "dense",
+        "collectibleCount": 10,
+        "collectiblesAllOnPath": false,
+        "cutoutCount": 10,
+        "cutoutSize": "small",
+        "objectiveCount": 4
+      }
+    },
+    "defaultDifficulty": "medium"
+  }
+]

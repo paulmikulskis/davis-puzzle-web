@@ -1,9 +1,11 @@
 {
-  "_schema": 1,
-  "generatedAt": "2026-05-09T00:33:40.759Z",
+  "_schema": 2,
+  "generatedAt": "2026-05-09T02:34:04.756Z",
   "itemCount": 138,
+  "assetCount": 179,
   "items": [
     {
+      "kind": "item",
       "canonicalName": "Apple",
       "displayName": "Apple",
       "sourceFilename": "Invicon_Apple.png",
@@ -11,12 +13,14 @@
         "food"
       ],
       "thumbnailPath": "/items/apple.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 114 cells, mean pairwise color distance 109."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Beetroot",
       "displayName": "Beetroot",
       "sourceFilename": "Invicon_Beetroot.png",
@@ -24,12 +28,14 @@
         "food"
       ],
       "thumbnailPath": "/items/beetroot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 69 cells, mean pairwise color distance 114."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Beetroot_Soup",
       "displayName": "Beetroot Soup",
       "sourceFilename": "Invicon_Beetroot_Soup.png",
@@ -37,12 +43,14 @@
         "food"
       ],
       "thumbnailPath": "/items/beetroot_soup.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 28 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bread",
       "displayName": "Bread",
       "sourceFilename": "Invicon_Bread.png",
@@ -50,12 +58,14 @@
         "food"
       ],
       "thumbnailPath": "/items/bread.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 71), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cake",
       "displayName": "Cake",
       "sourceFilename": "Invicon_Cake.png",
@@ -63,12 +73,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cake.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Carrot",
       "displayName": "Carrot",
       "sourceFilename": "Invicon_Carrot.png",
@@ -76,12 +88,14 @@
         "food"
       ],
       "thumbnailPath": "/items/carrot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 34 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Chorus_Fruit",
       "displayName": "Chorus Fruit",
       "sourceFilename": "Invicon_Chorus_Fruit.png",
@@ -89,12 +103,14 @@
         "food"
       ],
       "thumbnailPath": "/items/chorus_fruit.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 35 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cod_(Item)",
       "displayName": "Cod",
       "sourceFilename": "Invicon_Raw_Cod.png",
@@ -102,12 +118,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cod_item.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 146), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Beef",
       "displayName": "Cooked Beef",
       "sourceFilename": "Invicon_Cooked_Beef.png",
@@ -115,12 +133,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_beef.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 51), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Chicken",
       "displayName": "Cooked Chicken",
       "sourceFilename": "Invicon_Cooked_Chicken.png",
@@ -128,12 +148,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_chicken.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 71 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Cod",
       "displayName": "Cooked Cod",
       "sourceFilename": "Invicon_Cooked_Cod.png",
@@ -141,12 +163,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_cod.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 85 cells, mean pairwise color distance 128."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Mutton",
       "displayName": "Cooked Mutton",
       "sourceFilename": "Invicon_Cooked_Mutton.png",
@@ -154,12 +178,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_mutton.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 64), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Porkchop",
       "displayName": "Cooked Porkchop",
       "sourceFilename": "Invicon_Cooked_Porkchop.png",
@@ -167,12 +193,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_porkchop.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 76), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Rabbit",
       "displayName": "Cooked Rabbit",
       "sourceFilename": "Invicon_Cooked_Rabbit.png",
@@ -180,12 +208,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_rabbit.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 17) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cooked_Salmon",
       "displayName": "Cooked Salmon",
       "sourceFilename": "Invicon_Cooked_Salmon.png",
@@ -193,12 +223,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cooked_salmon.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 89), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cookie",
       "displayName": "Cookie",
       "sourceFilename": "Invicon_Cookie.png",
@@ -206,12 +238,14 @@
         "food"
       ],
       "thumbnailPath": "/items/cookie.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 71 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Dried_Kelp",
       "displayName": "Dried Kelp",
       "sourceFilename": "Invicon_Dried_Kelp.png",
@@ -219,12 +253,14 @@
         "food"
       ],
       "thumbnailPath": "/items/dried_kelp.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 63), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Glow_Berries",
       "displayName": "Glow Berries",
       "sourceFilename": "Invicon_Glow_Berries.png",
@@ -232,12 +268,14 @@
         "food"
       ],
       "thumbnailPath": "/items/glow_berries.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 20) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Golden_Apple",
       "displayName": "Golden Apple",
       "sourceFilename": "Invicon_Golden_Apple.png",
@@ -245,12 +283,14 @@
         "food"
       ],
       "thumbnailPath": "/items/golden_apple.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 146), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Honey_Bottle",
       "displayName": "Honey Bottle",
       "sourceFilename": "Invicon_Honey_Bottle.png",
@@ -258,12 +298,14 @@
         "food"
       ],
       "thumbnailPath": "/items/honey_bottle.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 34 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Melon_Slice",
       "displayName": "Melon Slice",
       "sourceFilename": "Invicon_Melon_Slice.png",
@@ -271,12 +313,14 @@
         "food"
       ],
       "thumbnailPath": "/items/melon_slice.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 29) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Mushroom_Stew",
       "displayName": "Mushroom Stew",
       "sourceFilename": "Invicon_Mushroom_Stew.png",
@@ -284,12 +328,14 @@
         "food"
       ],
       "thumbnailPath": "/items/mushroom_stew.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 22 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Potato",
       "displayName": "Potato",
       "sourceFilename": "Invicon_Potato.png",
@@ -297,12 +343,14 @@
         "food"
       ],
       "thumbnailPath": "/items/potato.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 22) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Pufferfish",
       "displayName": "Pufferfish",
       "sourceFilename": "Invicon_Pufferfish.png",
@@ -310,12 +358,14 @@
         "food"
       ],
       "thumbnailPath": "/items/pufferfish.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 69 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Pumpkin_Pie",
       "displayName": "Pumpkin Pie",
       "sourceFilename": "Invicon_Pumpkin_Pie.png",
@@ -323,12 +373,14 @@
         "food"
       ],
       "thumbnailPath": "/items/pumpkin_pie.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 77), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Rabbit_Stew",
       "displayName": "Rabbit Stew",
       "sourceFilename": "Invicon_Rabbit_Stew.png",
@@ -336,12 +388,14 @@
         "food"
       ],
       "thumbnailPath": "/items/rabbit_stew.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 29) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Salmon_(Item)",
       "displayName": "Salmon",
       "sourceFilename": "Invicon_Raw_Salmon.png",
@@ -349,12 +403,14 @@
         "food"
       ],
       "thumbnailPath": "/items/salmon_item.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 90), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Suspicious_Stew",
       "displayName": "Suspicious Stew",
       "sourceFilename": "Invicon_Suspicious_Stew.png",
@@ -362,12 +418,14 @@
         "food"
       ],
       "thumbnailPath": "/items/suspicious_stew.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 27 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Sweet_Berries",
       "displayName": "Sweet Berries",
       "sourceFilename": "Invicon_Sweet_Berries.png",
@@ -375,12 +433,14 @@
         "food"
       ],
       "thumbnailPath": "/items/sweet_berries.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 24) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Tropical_Fish_(Item)",
       "displayName": "Tropical Fish",
       "sourceFilename": "Invicon_Tropical_Fish.png",
@@ -388,12 +448,14 @@
         "food"
       ],
       "thumbnailPath": "/items/tropical_fish_item.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bow",
       "displayName": "Bow",
       "sourceFilename": "Invicon_Bow.png",
@@ -401,12 +463,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/bow.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 6 real colors over 70 cells, mean pairwise color distance 95."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Clock",
       "displayName": "Clock",
       "sourceFilename": "Invicon_Emerald.png",
@@ -414,12 +478,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/clock.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 160), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Compass",
       "displayName": "Compass",
       "sourceFilename": "Invicon_Paper.png",
@@ -427,12 +493,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/compass.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 88), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Crossbow",
       "displayName": "Crossbow",
       "sourceFilename": "Invicon_Crossbow.png",
@@ -440,12 +508,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/crossbow.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 76 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Diamond_Pickaxe",
       "displayName": "Diamond Pickaxe",
       "sourceFilename": "Invicon_Diamond_Pickaxe.png",
@@ -453,12 +523,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/diamond_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Diamond_Sword",
       "displayName": "Diamond Sword",
       "sourceFilename": "Invicon_Diamond_Sword.png",
@@ -466,12 +538,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/diamond_sword.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 3) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Fishing_Rod",
       "displayName": "Fishing Rod",
       "sourceFilename": "Invicon_Fishing_Rod.png",
@@ -479,12 +553,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/fishing_rod.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 154), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Flint_and_Steel",
       "displayName": "Flint and Steel",
       "sourceFilename": "Invicon_Flint_and_Steel.png",
@@ -492,12 +568,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/flint_and_steel.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 24) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Golden_Pickaxe",
       "displayName": "Golden Pickaxe",
       "sourceFilename": "Invicon_Golden_Pickaxe.png",
@@ -505,12 +583,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/golden_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Axe",
       "displayName": "Iron Axe",
       "sourceFilename": "Invicon_Iron_Axe.png",
@@ -518,12 +598,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/iron_axe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Hoe",
       "displayName": "Iron Hoe",
       "sourceFilename": "Invicon_Iron_Hoe.png",
@@ -531,12 +613,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/iron_hoe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 182), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Pickaxe",
       "displayName": "Iron Pickaxe",
       "sourceFilename": "Invicon_Iron_Pickaxe.png",
@@ -544,12 +628,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/iron_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 151), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Shovel",
       "displayName": "Iron Shovel",
       "sourceFilename": "Invicon_Iron_Shovel.png",
@@ -557,12 +643,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/iron_shovel.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 151), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Sword",
       "displayName": "Iron Sword",
       "sourceFilename": "Invicon_Iron_Sword.png",
@@ -570,12 +658,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/iron_sword.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Netherite_Pickaxe",
       "displayName": "Netherite Pickaxe",
       "sourceFilename": "Invicon_Netherite_Pickaxe.png",
@@ -583,12 +673,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/netherite_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 76), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Shears",
       "displayName": "Shears",
       "sourceFilename": "Invicon_Shears.png",
@@ -596,12 +688,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/shears.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 23) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Spyglass",
       "displayName": "Spyglass",
       "sourceFilename": "Invicon_Spyglass.png",
@@ -609,12 +703,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/spyglass.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 150), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Stone_Pickaxe",
       "displayName": "Stone Pickaxe",
       "sourceFilename": "Invicon_Stone_Pickaxe.png",
@@ -622,12 +718,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/stone_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 85), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Trident",
       "displayName": "Trident",
       "sourceFilename": "Invicon_Trident.png",
@@ -635,12 +733,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/trident.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 148), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Wooden_Pickaxe",
       "displayName": "Wooden Pickaxe",
       "sourceFilename": "Invicon_Wooden_Pickaxe.png",
@@ -648,12 +748,14 @@
         "tool"
       ],
       "thumbnailPath": "/items/wooden_pickaxe.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 62), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Copper_Ingot",
       "displayName": "Copper Ingot",
       "sourceFilename": "Invicon_Copper_Ingot.png",
@@ -661,12 +763,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/copper_ingot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Two palette colors are close enough (distance 12) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Gold_Ingot",
       "displayName": "Gold Ingot",
       "sourceFilename": "Invicon_Gold_Ingot.png",
@@ -674,12 +778,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/gold_ingot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 167), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Gold_Nugget",
       "displayName": "Gold Nugget",
       "sourceFilename": "Invicon_Gold_Nugget.png",
@@ -687,12 +793,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/gold_nugget.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 163), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Ingot",
       "displayName": "Iron Ingot",
       "sourceFilename": "Invicon_Iron_Ingot.png",
@@ -700,12 +808,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/iron_ingot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 10) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Iron_Nugget",
       "displayName": "Iron Nugget",
       "sourceFilename": "Invicon_Iron_Nugget.png",
@@ -713,12 +823,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/iron_nugget.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 4) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Netherite_Ingot",
       "displayName": "Netherite Ingot",
       "sourceFilename": "Invicon_Netherite_Ingot.png",
@@ -726,12 +838,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/netherite_ingot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 67), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Raw_Copper",
       "displayName": "Raw Copper",
       "sourceFilename": "Invicon_Raw_Copper.png",
@@ -739,12 +853,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/raw_copper.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "8 real colors to track (palette of 8, plus quantization remainders)."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Raw_Gold",
       "displayName": "Raw Gold",
       "sourceFilename": "Invicon_Raw_Gold.png",
@@ -752,12 +868,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/raw_gold.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 75 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Raw_Iron",
       "displayName": "Raw Iron",
       "sourceFilename": "Invicon_Raw_Iron.png",
@@ -765,12 +883,14 @@
         "ingot"
       ],
       "thumbnailPath": "/items/raw_iron.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 71 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Amethyst_Shard",
       "displayName": "Amethyst Shard",
       "sourceFilename": "Invicon_Amethyst_Shard.png",
@@ -778,12 +898,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/amethyst_shard.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 6 real colors over 89 cells, mean pairwise color distance 130."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Diamond",
       "displayName": "Diamond",
       "sourceFilename": "Invicon_Diamond.png",
@@ -791,12 +913,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/diamond.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 18) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Emerald",
       "displayName": "Emerald",
       "sourceFilename": "Invicon_Emerald.png",
@@ -804,12 +928,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/emerald.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 160), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Lapis_Lazuli",
       "displayName": "Lapis Lazuli",
       "sourceFilename": "Invicon_Lapis_Lazuli.png",
@@ -817,12 +943,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/lapis_lazuli.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 69 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Prismarine_Crystals",
       "displayName": "Prismarine Crystals",
       "sourceFilename": "Invicon_Prismarine_Crystals.png",
@@ -830,12 +958,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/prismarine_crystals.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 94 cells, mean pairwise color distance 115."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Prismarine_Shard",
       "displayName": "Prismarine Shard",
       "sourceFilename": "Invicon_Prismarine_Shard.png",
@@ -843,12 +973,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/prismarine_shard.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 66), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Quartz",
       "displayName": "Quartz",
       "sourceFilename": "Invicon_Nether_Quartz.png",
@@ -856,12 +988,14 @@
         "gem"
       ],
       "thumbnailPath": "/items/quartz.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 72), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Blaze_Rod",
       "displayName": "Blaze Rod",
       "sourceFilename": "Invicon_Blaze_Rod.png",
@@ -869,12 +1003,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/blaze_rod.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 51 cells, mean pairwise color distance 102."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bone",
       "displayName": "Bone",
       "sourceFilename": "Invicon_Bone.png",
@@ -882,12 +1018,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/bone.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 68 cells, mean pairwise color distance 114."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Egg",
       "displayName": "Egg",
       "sourceFilename": "Invicon_Egg.png",
@@ -895,12 +1033,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/egg.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 24 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Ender_Pearl",
       "displayName": "Ender Pearl",
       "sourceFilename": "Invicon_Ender_Pearl.png",
@@ -908,12 +1048,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/ender_pearl.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Feather",
       "displayName": "Feather",
       "sourceFilename": "Invicon_Feather.png",
@@ -921,12 +1063,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/feather.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Ghast_Tear",
       "displayName": "Ghast Tear",
       "sourceFilename": "Invicon_Ghast_Tear.png",
@@ -934,12 +1078,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/ghast_tear.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 163), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Glow_Ink_Sac",
       "displayName": "Glow Ink Sac",
       "sourceFilename": "Invicon_Glow_Ink_Sac.png",
@@ -947,12 +1093,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/glow_ink_sac.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 30 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Gunpowder",
       "displayName": "Gunpowder",
       "sourceFilename": "Invicon_Gunpowder.png",
@@ -960,12 +1108,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/gunpowder.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 64), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Ink_Sac",
       "displayName": "Ink Sac",
       "sourceFilename": "Invicon_Ink_Sac.png",
@@ -973,12 +1123,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/ink_sac.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 32 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Leather",
       "displayName": "Leather",
       "sourceFilename": "Invicon_Leather.png",
@@ -986,12 +1138,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/leather.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 87), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Magma_Cream",
       "displayName": "Magma Cream",
       "sourceFilename": "Invicon_Magma_Cream.png",
@@ -999,12 +1153,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/magma_cream.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 152), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Phantom_Membrane",
       "displayName": "Phantom Membrane",
       "sourceFilename": "Invicon_Phantom_Membrane.png",
@@ -1012,12 +1168,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/phantom_membrane.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 79), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Rabbit_Hide",
       "displayName": "Rabbit Hide",
       "sourceFilename": "Invicon_Rabbit_Hide.png",
@@ -1025,12 +1183,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/rabbit_hide.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 81), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Rabbit's_Foot",
       "displayName": "Rabbit's Foot",
       "sourceFilename": "Invicon_Rabbit's_Foot.png",
@@ -1038,12 +1198,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/rabbits_foot.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 33 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Rotten_Flesh",
       "displayName": "Rotten Flesh",
       "sourceFilename": "Invicon_Rotten_Flesh.png",
@@ -1051,12 +1213,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/rotten_flesh.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 73), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Slime_Ball",
       "displayName": "Slime Ball",
       "sourceFilename": "Invicon_Piston.png",
@@ -1064,12 +1228,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/slime_ball.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 3 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Spider_Eye",
       "displayName": "Spider Eye",
       "sourceFilename": "Invicon_Spider_Eye.png",
@@ -1077,12 +1243,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/spider_eye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 152), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "String",
       "displayName": "String",
       "sourceFilename": "Invicon_String.png",
@@ -1090,12 +1258,14 @@
         "mob-drop"
       ],
       "thumbnailPath": "/items/string.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 211), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bamboo",
       "displayName": "Bamboo",
       "sourceFilename": "Invicon_Bamboo.png",
@@ -1103,12 +1273,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/bamboo.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 62), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Beetroot_Seeds",
       "displayName": "Beetroot Seeds",
       "sourceFilename": "Invicon_Beetroot_Seeds.png",
@@ -1116,12 +1288,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/beetroot_seeds.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 3 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cactus",
       "displayName": "Cactus",
       "sourceFilename": "Invicon_Cactus.png",
@@ -1129,12 +1303,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/cactus.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cocoa_Beans",
       "displayName": "Cocoa Beans",
       "sourceFilename": "Invicon_Cocoa_Beans.png",
@@ -1142,12 +1318,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/cocoa_beans.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Fern",
       "displayName": "Fern",
       "sourceFilename": "Invicon_Fern.png",
@@ -1155,12 +1333,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/fern.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 32), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Glow_Lichen",
       "displayName": "Glow Lichen",
       "sourceFilename": "Invicon_Glow_Lichen.png",
@@ -1168,12 +1348,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/glow_lichen.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 45), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Kelp",
       "displayName": "Kelp",
       "sourceFilename": "Invicon_Kelp.png",
@@ -1181,12 +1363,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/kelp.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 35 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Lily_Pad",
       "displayName": "Lily Pad",
       "sourceFilename": "Invicon_Lily_Pad.png",
@@ -1194,12 +1378,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/lily_pad.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Melon_Seeds",
       "displayName": "Melon Seeds",
       "sourceFilename": "Invicon_Melon_Seeds.png",
@@ -1207,12 +1393,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/melon_seeds.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 3 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Nether_Wart",
       "displayName": "Nether Wart",
       "sourceFilename": "Invicon_Nether_Wart.png",
@@ -1220,12 +1408,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/nether_wart.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Pumpkin_Seeds",
       "displayName": "Pumpkin Seeds",
       "sourceFilename": "Invicon_Pumpkin_Seeds.png",
@@ -1233,12 +1423,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/pumpkin_seeds.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 3 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Sugar_Cane",
       "displayName": "Sugar Cane",
       "sourceFilename": "Invicon_Sugar_Cane.png",
@@ -1246,12 +1438,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/sugar_cane.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 66 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Vines",
       "displayName": "Vines",
       "sourceFilename": "Invicon_Vines.png",
@@ -1259,12 +1453,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/vines.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 81 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Wheat",
       "displayName": "Wheat",
       "sourceFilename": "Invicon_Wheat.png",
@@ -1272,12 +1468,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/wheat.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 84), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Wheat_Seeds",
       "displayName": "Wheat Seeds",
       "sourceFilename": "Invicon_Wheat_Seeds.png",
@@ -1285,12 +1483,14 @@
         "plant"
       ],
       "thumbnailPath": "/items/wheat_seeds.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 23 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Brick",
       "displayName": "Brick",
       "sourceFilename": "Invicon_Brick.png",
@@ -1298,12 +1498,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/brick.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 80), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Charcoal",
       "displayName": "Charcoal",
       "sourceFilename": "Invicon_Charcoal.png",
@@ -1311,12 +1513,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/charcoal.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Clay_Ball",
       "displayName": "Clay Ball",
       "sourceFilename": "Invicon_Clay_Ball.png",
@@ -1324,12 +1528,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/clay_ball.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 18) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Coal",
       "displayName": "Coal",
       "sourceFilename": "Invicon_Coal.png",
@@ -1337,12 +1543,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/coal.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 29), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Flint",
       "displayName": "Flint",
       "sourceFilename": "Invicon_Flint.png",
@@ -1350,12 +1558,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/flint.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 116 cells, mean pairwise color distance 112."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Glowstone_Dust",
       "displayName": "Glowstone Dust",
       "sourceFilename": "Invicon_Glowstone_Dust.png",
@@ -1363,12 +1573,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/glowstone_dust.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Icon is broken into 65 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Nether_Brick_(Item)",
       "displayName": "Nether Brick",
       "sourceFilename": "Invicon_Nether_Brick.png",
@@ -1376,12 +1588,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/nether_brick_item.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 27), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Redstone",
       "displayName": "Redstone",
       "sourceFilename": "Invicon_Redstone.png",
@@ -1389,12 +1603,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/redstone.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 87), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Sugar",
       "displayName": "Sugar",
       "sourceFilename": "Invicon_Sugar.png",
@@ -1402,12 +1618,14 @@
         "mineral"
       ],
       "thumbnailPath": "/items/sugar.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 5 real colors over 88 cells, mean pairwise color distance 128."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Black_Dye",
       "displayName": "Black Dye",
       "sourceFilename": "Invicon_Black_Dye.png",
@@ -1415,12 +1633,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/black_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 81), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Blue_Dye",
       "displayName": "Blue Dye",
       "sourceFilename": "Invicon_Blue_Dye.png",
@@ -1428,12 +1648,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/blue_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 27) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Brown_Dye",
       "displayName": "Brown Dye",
       "sourceFilename": "Invicon_Brown_Dye.png",
@@ -1441,12 +1663,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/brown_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 69), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Cyan_Dye",
       "displayName": "Cyan Dye",
       "sourceFilename": "Invicon_Cyan_Dye.png",
@@ -1454,12 +1678,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/cyan_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 6 real colors over 149 cells, mean pairwise color distance 125."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Gray_Dye",
       "displayName": "Gray Dye",
       "sourceFilename": "Invicon_Gray_Dye.png",
@@ -1467,12 +1693,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/gray_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 77), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Green_Dye",
       "displayName": "Green Dye",
       "sourceFilename": "Invicon_Green_Dye.png",
@@ -1480,12 +1708,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/green_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 73), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Light_Blue_Dye",
       "displayName": "Light Blue Dye",
       "sourceFilename": "Invicon_Light_Blue_Dye.png",
@@ -1493,12 +1723,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/light_blue_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 6 real colors over 137 cells, mean pairwise color distance 126."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Light_Gray_Dye",
       "displayName": "Light Gray Dye",
       "sourceFilename": "Invicon_Light_Gray_Dye.png",
@@ -1506,12 +1738,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/light_gray_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 12) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Lime_Dye",
       "displayName": "Lime Dye",
       "sourceFilename": "Invicon_Lime_Dye.png",
@@ -1519,12 +1753,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/lime_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Two palette colors are close enough (distance 22) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Magenta_Dye",
       "displayName": "Magenta Dye",
       "sourceFilename": "Invicon_Magenta_Dye.png",
@@ -1532,12 +1768,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/magenta_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 23) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Orange_Dye",
       "displayName": "Orange Dye",
       "sourceFilename": "Invicon_Orange_Dye.png",
@@ -1545,12 +1783,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/orange_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "8 real colors to track (palette of 8, plus quantization remainders)."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Pink_Dye",
       "displayName": "Pink Dye",
       "sourceFilename": "Invicon_Pink_Dye.png",
@@ -1558,12 +1798,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/pink_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Purple_Dye",
       "displayName": "Purple Dye",
       "sourceFilename": "Invicon_Purple_Dye.png",
@@ -1571,12 +1813,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/purple_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 24) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Red_Dye",
       "displayName": "Red Dye",
       "sourceFilename": "Invicon_Red_Dye.png",
@@ -1584,12 +1828,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/red_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 19) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "White_Dye",
       "displayName": "White Dye",
       "sourceFilename": "Invicon_White_Dye.png",
@@ -1597,12 +1843,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/white_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 156), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Yellow_Dye",
       "displayName": "Yellow Dye",
       "sourceFilename": "Invicon_Yellow_Dye.png",
@@ -1610,12 +1858,14 @@
         "dye"
       ],
       "thumbnailPath": "/items/yellow_dye.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 63 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Arrow",
       "displayName": "Arrow",
       "sourceFilename": "Invicon_Arrow.png",
@@ -1623,12 +1873,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/arrow.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Icon settles into 29 clean same-color regions, easy to scan."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bone_Meal",
       "displayName": "Bone Meal",
       "sourceFilename": "Invicon_Bone_Meal.png",
@@ -1636,12 +1888,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/bone_meal.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Icon is broken into 95 same-color regions — lots of small pieces to track."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Book",
       "displayName": "Book",
       "sourceFilename": "Invicon_Book.png",
@@ -1649,12 +1903,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/book.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Bucket",
       "displayName": "Bucket",
       "sourceFilename": "Invicon_Bucket.png",
@@ -1662,12 +1918,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/bucket.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 142), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Lava_Bucket",
       "displayName": "Lava Bucket",
       "sourceFilename": "Invicon_Lava_Bucket.png",
@@ -1675,12 +1933,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/lava_bucket.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Balanced easy icon: 6 real colors over 146 cells, mean pairwise color distance 136."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Lead",
       "displayName": "Lead",
       "sourceFilename": "Invicon_Lead.png",
@@ -1688,12 +1948,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/lead.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Milk_Bucket",
       "displayName": "Milk Bucket",
       "sourceFilename": "Invicon_Milk_Bucket.png",
@@ -1701,12 +1963,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/milk_bucket.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Two palette colors are close enough (distance 0) that a child can confuse them."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Music_Disc_13",
       "displayName": "Music Disc 13",
       "sourceFilename": "Invicon_Music_Disc_13.png",
@@ -1714,12 +1978,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/music_disc_13.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 187), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Paper",
       "displayName": "Paper",
       "sourceFilename": "Invicon_Paper.png",
@@ -1727,12 +1993,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/paper.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 88), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Saddle",
       "displayName": "Saddle",
       "sourceFilename": "Invicon_Saddle.png",
@@ -1740,12 +2008,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/saddle.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "medium",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 84), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Snowball",
       "displayName": "Snowball",
       "sourceFilename": "Invicon_Snowball.png",
@@ -1753,12 +2023,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/snowball.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "hard",
         "difficultyExplanation": "Palette lives in a narrow color band (mean pairwise distance 80), so colors look similar to each other."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Spectral_Arrow",
       "displayName": "Spectral Arrow",
       "sourceFilename": "Invicon_Spectral_Arrow.png",
@@ -1766,12 +2038,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/spectral_arrow.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 177), so colors are easy to tell apart."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Stick",
       "displayName": "Stick",
       "sourceFilename": "Invicon_Stick.png",
@@ -1779,12 +2053,14 @@
         "misc"
       ],
       "thumbnailPath": "/items/stick.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Only 4 real colors carry the icon, keeping choices simple."
       }
     },
     {
+      "kind": "item",
       "canonicalName": "Water_Bucket",
       "displayName": "Water Bucket",
       "sourceFilename": "Invicon_Water_Bucket.png",
@@ -1792,10 +2068,593 @@
         "misc"
       ],
       "thumbnailPath": "/items/water_bucket.png",
+      "displayPixelSize": 16,
       "flags": {
         "difficulty": "easy",
         "difficultyExplanation": "Palette spans a wide color gamut (mean pairwise distance 149), so colors are easy to tell apart."
       }
+    }
+  ],
+  "blocks": [
+    {
+      "kind": "block",
+      "canonicalName": "Chorus_Flower",
+      "displayName": "Chorus Flower",
+      "sourceFilename": "Invicon_Chorus_Flower.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/chorus_flower.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Cobblestone",
+      "displayName": "Cobblestone",
+      "sourceFilename": "Invicon_Cobblestone.png",
+      "categories": [
+        "block",
+        "overworld"
+      ],
+      "thumbnailPath": "/blocks/cobblestone.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Crying_Obsidian",
+      "displayName": "Crying Obsidian",
+      "sourceFilename": "Invicon_Crying_Obsidian.png",
+      "categories": [
+        "block",
+        "end",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/crying_obsidian.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Dark_Prismarine",
+      "displayName": "Dark Prismarine",
+      "sourceFilename": "Invicon_Dark_Prismarine.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/dark_prismarine.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Dragon_Egg",
+      "displayName": "Dragon Egg",
+      "sourceFilename": "Invicon_Dragon_Egg.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/dragon_egg.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "End_Crystal",
+      "displayName": "End Crystal",
+      "sourceFilename": "Invicon_Glass.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/end_crystal.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true,
+      "displayNameSingular": "ender crystal",
+      "displayNamePlural": "ender crystals"
+    },
+    {
+      "kind": "block",
+      "canonicalName": "End_Rod",
+      "displayName": "End Rod",
+      "sourceFilename": "Invicon_End_Rod.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/end_rod.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "End_Stone",
+      "displayName": "End Stone",
+      "sourceFilename": "Invicon_End_Stone.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/end_stone.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "End_Stone_Bricks",
+      "displayName": "End Stone Bricks",
+      "sourceFilename": "Invicon_End_Stone_Bricks.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/end_stone_bricks.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Glowstone",
+      "displayName": "Glowstone",
+      "sourceFilename": "Invicon_Glowstone.png",
+      "categories": [
+        "block",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/glowstone.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Hay_Bale",
+      "displayName": "Hay Bale",
+      "sourceFilename": "Invicon_Hay_Bale.png",
+      "categories": [
+        "block",
+        "overworld"
+      ],
+      "thumbnailPath": "/blocks/hay_bale.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Ladder",
+      "displayName": "Ladder",
+      "sourceFilename": "Invicon_Ladder.png",
+      "categories": [
+        "block",
+        "misc"
+      ],
+      "thumbnailPath": "/blocks/ladder.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Netherrack",
+      "displayName": "Netherrack",
+      "sourceFilename": "Invicon_Netherrack.png",
+      "categories": [
+        "block",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/netherrack.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Oak_Planks",
+      "displayName": "Oak Planks",
+      "sourceFilename": "Invicon_Oak_Planks.png",
+      "categories": [
+        "block",
+        "overworld"
+      ],
+      "thumbnailPath": "/blocks/oak_planks.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Obsidian",
+      "displayName": "Obsidian",
+      "sourceFilename": "Invicon_Obsidian.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/obsidian.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Prismarine",
+      "displayName": "Prismarine",
+      "sourceFilename": "Prismarine_JE2_BE2.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/prismarine.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Prismarine_Bricks",
+      "displayName": "Prismarine Bricks",
+      "sourceFilename": "Invicon_Prismarine_Bricks.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/prismarine_bricks.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Pumpkin",
+      "displayName": "Pumpkin",
+      "sourceFilename": "Invicon_Pumpkin.png",
+      "categories": [
+        "block",
+        "overworld"
+      ],
+      "thumbnailPath": "/blocks/pumpkin.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Purpur_Block",
+      "displayName": "Purpur Block",
+      "sourceFilename": "Invicon_Purpur_Block.png",
+      "categories": [
+        "block",
+        "end"
+      ],
+      "thumbnailPath": "/blocks/purpur_block.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Sculk",
+      "displayName": "Sculk",
+      "sourceFilename": "Sculk_JE1_BE1.png",
+      "categories": [
+        "block",
+        "ancient-city"
+      ],
+      "thumbnailPath": "/blocks/sculk.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Sea_Lantern",
+      "displayName": "Sea Lantern",
+      "sourceFilename": "Sea_Lantern_JE1_BE1.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/sea_lantern.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Sea_Pickle",
+      "displayName": "Sea Pickle",
+      "sourceFilename": "Invicon_Sea_Pickle.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/sea_pickle.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Soul_Sand",
+      "displayName": "Soul Sand",
+      "sourceFilename": "Invicon_Soul_Sand.png",
+      "categories": [
+        "block",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/soul_sand.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true,
+      "displayNameSingular": "soul sand",
+      "massNoun": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Soul_Soil",
+      "displayName": "Soul Soil",
+      "sourceFilename": "Invicon_Soul_Soil.png",
+      "categories": [
+        "block",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/soul_soil.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false,
+      "massNoun": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Soul_Torch",
+      "displayName": "Soul Torch",
+      "sourceFilename": "Invicon_Soul_Torch.png",
+      "categories": [
+        "block",
+        "nether"
+      ],
+      "thumbnailPath": "/blocks/soul_torch.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Sponge",
+      "displayName": "Sponge",
+      "sourceFilename": "Invicon_Sponge.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/sponge.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Stone",
+      "displayName": "Stone",
+      "sourceFilename": "Invicon_Stone.png",
+      "categories": [
+        "block",
+        "overworld"
+      ],
+      "thumbnailPath": "/blocks/stone.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": false
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Wet_Sponge",
+      "displayName": "Wet Sponge",
+      "sourceFilename": "Invicon_Wet_Sponge.png",
+      "categories": [
+        "block",
+        "ocean"
+      ],
+      "thumbnailPath": "/blocks/wet_sponge.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true
+    },
+    {
+      "kind": "block",
+      "canonicalName": "Wither_Skeleton_Skull",
+      "displayName": "Wither Skeleton Skull",
+      "sourceFilename": "Invicon_Wither_Skeleton_Skull.png",
+      "categories": [
+        "block",
+        "nether",
+        "mob-drop"
+      ],
+      "thumbnailPath": "/blocks/wither_skeleton_skull.png",
+      "displayPixelSize": 16,
+      "isPlaceableInAssembly": true,
+      "displayNameSingular": "wither skull",
+      "displayNamePlural": "wither skulls"
+    }
+  ],
+  "entities": [
+    {
+      "kind": "entity",
+      "canonicalName": "Allay",
+      "displayName": "Allay",
+      "sourceFilename": "Allay_JE2_BE2.gif",
+      "categories": [
+        "entity",
+        "neutral",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/allay.png",
+      "defaultDisplaySize": 120,
+      "sourceIsAnimated": true,
+      "sourceWidthPx": 240,
+      "sourceHeightPx": 240
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Blaze",
+      "displayName": "Blaze",
+      "sourceFilename": "Blaze_JE1_BE1.png",
+      "categories": [
+        "entity",
+        "hostile",
+        "nether"
+      ],
+      "thumbnailPath": "/entities/blaze.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 537,
+      "sourceHeightPx": 1024
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Creeper",
+      "displayName": "Creeper",
+      "sourceFilename": "Creeper_JE1.png",
+      "categories": [
+        "entity",
+        "hostile",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/creeper.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 472,
+      "sourceHeightPx": 964
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Elder_Guardian",
+      "displayName": "Elder Guardian",
+      "sourceFilename": "Elder_Guardian_JE2_BE2.png",
+      "categories": [
+        "entity",
+        "boss",
+        "ocean"
+      ],
+      "thumbnailPath": "/entities/elder_guardian.png",
+      "defaultDisplaySize": 160,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 1318,
+      "sourceHeightPx": 1080
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Ender_Dragon",
+      "displayName": "Ender Dragon",
+      "sourceFilename": "Ender_Dragon.gif",
+      "categories": [
+        "entity",
+        "boss",
+        "end"
+      ],
+      "thumbnailPath": "/entities/ender_dragon.png",
+      "defaultDisplaySize": 200,
+      "sourceIsAnimated": true,
+      "sourceWidthPx": 400,
+      "sourceHeightPx": 408
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Iron_Golem",
+      "displayName": "Iron Golem",
+      "sourceFilename": "Iron_Golem_JE2_BE2.png",
+      "categories": [
+        "entity",
+        "neutral",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/iron_golem.png",
+      "defaultDisplaySize": 160,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 532,
+      "sourceHeightPx": 1000
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Skeleton",
+      "displayName": "Skeleton",
+      "sourceFilename": "Skeleton_JE5_BE3.png",
+      "categories": [
+        "entity",
+        "hostile",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/skeleton.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 503,
+      "sourceHeightPx": 1024
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Snow_Golem",
+      "displayName": "Snow Golem",
+      "sourceFilename": "Snow_Golem_JE2_BE2.png",
+      "categories": [
+        "entity",
+        "neutral",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/snow_golem.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 630,
+      "sourceHeightPx": 1200
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Warden",
+      "displayName": "Warden",
+      "sourceFilename": "Warden_JE1_BE1.png",
+      "categories": [
+        "entity",
+        "boss",
+        "ancient-city"
+      ],
+      "thumbnailPath": "/entities/warden.png",
+      "defaultDisplaySize": 180,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 500,
+      "sourceHeightPx": 800
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Wither",
+      "displayName": "Wither",
+      "sourceFilename": "Wither_JE2_BE2.png",
+      "categories": [
+        "entity",
+        "boss",
+        "nether"
+      ],
+      "thumbnailPath": "/entities/wither.png",
+      "defaultDisplaySize": 180,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 1080,
+      "sourceHeightPx": 1080
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Wither_Skeleton",
+      "displayName": "Wither Skeleton",
+      "sourceFilename": "Wither_Skeleton_JE3_BE2.png",
+      "categories": [
+        "entity",
+        "hostile",
+        "nether"
+      ],
+      "thumbnailPath": "/entities/wither_skeleton.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 960,
+      "sourceHeightPx": 1420
+    },
+    {
+      "kind": "entity",
+      "canonicalName": "Zombie",
+      "displayName": "Zombie",
+      "sourceFilename": "Zombie_JE3_BE2.png",
+      "categories": [
+        "entity",
+        "hostile",
+        "overworld"
+      ],
+      "thumbnailPath": "/entities/zombie.png",
+      "defaultDisplaySize": 140,
+      "sourceIsAnimated": false,
+      "sourceWidthPx": 356,
+      "sourceHeightPx": 594
     }
   ]
 }

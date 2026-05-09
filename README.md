@@ -1,7 +1,7 @@
 # Minecraft Pixel Puzzle Web
 
 Minecraft Pixel Puzzle Web is a tiny stateless Next.js utility for generating
-Minecraft-themed occupational therapy worksheets. Andrew Davis designed the
+Minecraft-themed occupational therapy worksheets. Davis Rioux designed the
 original worksheet format so kids can practice hand-eye coordination,
 visual-spatial reasoning, sustained focus, and fine motor control through a
 playful 16x16 pixel-art activity. This web app ports the on-host Python
@@ -276,5 +276,5 @@ vercel inspect https://davis-puzzle-web.vercel.app --scope paulmikulskis-project
 
 ## Credits
 
-Andrew Davis designed the worksheet format. This is an unofficial fan-made tool.
+Davis Rioux designed the worksheet format. This is an unofficial fan-made tool.
 Textures are Copyright Mojang and sourced from minecraft.wiki.
