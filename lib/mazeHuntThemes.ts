@@ -10,7 +10,11 @@ export type MazeSilhouette =
   | "circle"
   | "rectangle"
   | "diamond-star"
-  | "rounded-rectangle";
+  | "rounded-rectangle"
+  | "hexagon"
+  | "ring"
+  | "plus"
+  | "oval";
 
 export type DifficultyPreset = "easy" | "medium" | "hard";
 
@@ -98,6 +102,10 @@ const SILHOUETTES: readonly MazeSilhouette[] = [
   "rectangle",
   "diamond-star",
   "rounded-rectangle",
+  "hexagon",
+  "ring",
+  "plus",
+  "oval",
 ];
 
 const DIFFICULTY_PRESETS: readonly DifficultyPreset[] = [
