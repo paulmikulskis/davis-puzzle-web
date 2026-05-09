@@ -1,8 +1,9 @@
 "use client";
 
-// Epic 1+2 scratch page. Drives the full Maze Hunt pipeline (maze + collectibles
-// + assembly + cutouts) end-to-end against the 3 v1 themes. The polished UI
-// lands behind the tab strip in app/page.tsx in Epic 4.
+// Epic 1+2+3 scratch page. Drives the full Maze Hunt pipeline (maze +
+// collectibles + assembly + cutouts + objectives + two-up print) end-to-end
+// against the 3 v1 themes. The polished UI lands behind the tab strip in
+// app/page.tsx in Epic 4.
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -21,6 +22,14 @@ import {
   type MazeHuntTheme,
 } from "@/lib/mazeHuntThemes";
 import { isPuzzleError } from "@/lib/errors";
+import {
+  buildCatalogLookup,
+  composeObjectives,
+  type CatalogLookup,
+  type Objective,
+  type ObjectiveSlot,
+} from "@/lib/objectives";
+import { isCatalogFile, type CatalogFile } from "@/lib/catalog";
 
 interface GeneratedPdf {
   id: string;
@@ -33,6 +42,7 @@ interface GeneratedPdf {
   walls: number;
   collectibleCount: number;
   hasAssembly: boolean;
+  objectives: Objective[];
 }
 
 function silhouetteForTheme(
@@ -116,13 +126,25 @@ async function fetchSpriteBytes(
   return out;
 }
 
+const SLOT_LABELS: Record<ObjectiveSlot, string> = {
+  navigate: "Navigate",
+  find: "Find",
+  escape: "Escape",
+  craft: "Craft",
+  "state-change": "State change",
+};
+
 export default function MazeScratchPage() {
   const [themes, setThemes] = useState<MazeHuntTheme[]>([]);
+  const [catalog, setCatalog] = useState<CatalogFile | null>(null);
   const [activeThemeId, setActiveThemeId] = useState<string>("end-island");
   const [difficulty, setDifficulty] = useState<DifficultyPreset>("medium");
-  const [showSolution, setShowSolution] = useState(false);
   const [bwSafe, setBwSafe] = useState(false);
-  const [showAnswerKey, setShowAnswerKey] = useState(false);
+  const [splitOntoTwoPages, setSplitOntoTwoPages] = useState(false);
+  const [sessionLabel, setSessionLabel] = useState("");
+  const [overrides, setOverrides] = useState<
+    Partial<Record<ObjectiveSlot, string>>
+  >({});
   const [pdf, setPdf] = useState<GeneratedPdf | null>(null);
   const [status, setStatus] = useState(
     "Pick a theme and a difficulty, then Generate.",
@@ -144,6 +166,19 @@ export default function MazeScratchPage() {
           err instanceof Error ? err.message : "Failed to load themes.",
         );
       });
+    fetch("/items.json", { cache: "default" })
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (cancelled) return;
+        if (isCatalogFile(data)) {
+          setCatalog(data);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Non-fatal: objectives composer will still emit text but plurals may
+        // fall back to default rules.
+      });
     return () => {
       cancelled = true;
     };
@@ -159,6 +194,27 @@ export default function MazeScratchPage() {
     () => themes.find((t) => t.id === activeThemeId) ?? null,
     [themes, activeThemeId],
   );
+
+  // Overrides are kept sticky-by-theme. Switching the theme via the dropdown
+  // clears them in the change handler (not in an effect — see React rule
+  // react-hooks/set-state-in-effect), since overrides reference theme-specific
+  // items ("ender crystals" in End Island isn't a thing in Nether). Per F6 §4.
+  function changeActiveTheme(nextThemeId: string): void {
+    setActiveThemeId(nextThemeId);
+    setOverrides({});
+  }
+
+  function setOverrideFor(slot: ObjectiveSlot, value: string): void {
+    setOverrides((prev) => {
+      const next = { ...prev };
+      if (value.trim().length === 0) {
+        delete next[slot];
+      } else {
+        next[slot] = value;
+      }
+      return next;
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -202,7 +258,7 @@ export default function MazeScratchPage() {
         throw new Error(`Placement failed: ${placement.reason}`);
       }
 
-      // Boss center cell
+      // Boss center cell.
       const bossCell = findInShapeCenter(grid);
       const boss =
         bossCell !== null
@@ -239,26 +295,42 @@ export default function MazeScratchPage() {
       }
       const spriteBytes = await fetchSpriteBytes(spritePaths);
 
+      setStatus("Composing objectives...");
+      const catalogLookup: CatalogLookup =
+        catalog !== null
+          ? buildCatalogLookup(catalog)
+          : { findAsset: () => undefined };
+      const objectives = composeObjectives({
+        theme: activeTheme,
+        placementsByItem: placement.placementsByItem,
+        assembly,
+        catalog: catalogLookup,
+        overrides,
+      });
+
       setStatus("Rendering PDF...");
       const { buildMazeHuntPdf } = await import("@/lib/pdf/mazeHunt");
       const themeLabel = activeTheme.displayName;
+      const cutoutSize =
+        diff.cutoutSize === "small"
+          ? "small"
+          : diff.cutoutSize === "large"
+            ? "large"
+            : "medium";
       const pdfBytes = await buildMazeHuntPdf({
         grid,
-        title: themeLabel,
-        themeLabel,
-        showSolutionPath: showSolution,
-        blackAndWhiteSafe: bwSafe,
+        theme: { id: activeTheme.id, displayName: activeTheme.displayName },
+        difficulty,
         collectibles: placement.placements,
+        placementsByItem: placement.placementsByItem,
         boss,
         assembly,
-        cutoutSize:
-          diff.cutoutSize === "small"
-            ? "small"
-            : diff.cutoutSize === "large"
-              ? "large"
-              : "medium",
-        showAssemblyAnswerKey: showAnswerKey,
+        cutoutSize,
         spriteBytes,
+        objectives,
+        blackAndWhiteSafe: bwSafe,
+        splitOntoTwoPages,
+        sessionLabel,
       });
       const buffer = new ArrayBuffer(pdfBytes.byteLength);
       new Uint8Array(buffer).set(pdfBytes);
@@ -276,10 +348,18 @@ export default function MazeScratchPage() {
         walls: grid.walls.length,
         collectibleCount: placement.totalCount,
         hasAssembly: assembly !== undefined,
+        objectives,
       });
       committed = true;
+      const mismatchCount = objectives.filter(
+        (o) => o.countMismatch !== undefined,
+      ).length;
+      const mismatchSuffix =
+        mismatchCount > 0
+          ? ` ⚠ ${mismatchCount} objective${mismatchCount === 1 ? "" : "s"} have a count mismatch — review before printing.`
+          : "";
       setStatus(
-        `Preview ready — ${placement.totalCount} collectibles placed, ${grid.walls.length} walls. Confirm to download.`,
+        `Preview ready — ${placement.totalCount} collectibles placed, ${grid.walls.length} walls, ${objectives.length} objectives. Confirm to download.${mismatchSuffix}`,
       );
     } catch (err) {
       if (isPuzzleError(err)) {
@@ -307,20 +387,32 @@ export default function MazeScratchPage() {
     a.remove();
   }
 
+  // For each slot we expose at most one override input. For multi-item
+  // navigate themes (Nether), the override applies to the FIRST navigate
+  // line only — see composeObjectives() comment.
+  const editableSlots: ObjectiveSlot[] = [
+    "navigate",
+    "find",
+    "escape",
+    "craft",
+    "state-change",
+  ];
+
   return (
     <main className="min-h-screen bg-[var(--background)] px-5 py-8 text-[var(--foreground)] sm:px-8">
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
-            Maze Hunt — Epic 2 scratch
+            Maze Hunt — Epic 3 scratch
           </p>
           <h1 className="mt-3 text-3xl font-semibold leading-tight text-[var(--heading)]">
-            Themed maze worksheet (collectibles + assembly)
+            Two-up worksheet (child + facilitator)
           </h1>
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Drives the full v1 pipeline: maze generation + collectible
-            placement + assembly target + cutout strip. The polished front-door
-            UI lands in Epic 4.
+            Drives the full v1 pipeline: maze + collectibles + assembly +
+            cutouts + objective checklist + two-up Letter portrait print
+            layout (child copy on top half, facilitator answer copy on bottom
+            half). The polished front-door UI lands in Epic 4.
           </p>
         </div>
         <form
@@ -338,7 +430,7 @@ export default function MazeScratchPage() {
               <select
                 id="theme"
                 value={activeThemeId}
-                onChange={(e) => setActiveThemeId(e.target.value)}
+                onChange={(e) => changeActiveTheme(e.target.value)}
                 disabled={isGenerating || themes.length === 0}
                 className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
               >
@@ -370,16 +462,24 @@ export default function MazeScratchPage() {
                 <option value="hard">Hard</option>
               </select>
             </div>
-            <div className="flex flex-wrap gap-6">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={showSolution}
-                  onChange={(e) => setShowSolution(e.target.checked)}
-                  disabled={isGenerating}
-                />
-                <span>Show maze answer-key path</span>
+            <div>
+              <label
+                htmlFor="session-label"
+                className="block text-sm font-medium text-[var(--heading)]"
+              >
+                Session label (optional)
               </label>
+              <input
+                id="session-label"
+                type="text"
+                value={sessionLabel}
+                onChange={(e) => setSessionLabel(e.target.value)}
+                disabled={isGenerating}
+                placeholder="e.g. Tuesday group, Cohort A"
+                className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base"
+              />
+            </div>
+            <div className="flex flex-wrap gap-6">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -392,13 +492,44 @@ export default function MazeScratchPage() {
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
-                  checked={showAnswerKey}
-                  onChange={(e) => setShowAnswerKey(e.target.checked)}
+                  checked={splitOntoTwoPages}
+                  onChange={(e) => setSplitOntoTwoPages(e.target.checked)}
                   disabled={isGenerating}
                 />
-                <span>Show assembly answer key</span>
+                <span>Split onto two pages (answer key off-page)</span>
               </label>
             </div>
+            <details className="rounded-md border border-[var(--border)] bg-[var(--panel)] p-3 text-sm">
+              <summary className="cursor-pointer font-medium text-[var(--heading)]">
+                Objective overrides (optional)
+              </summary>
+              <p className="mt-2 text-xs text-[var(--muted)]">
+                Leave blank to use the theme defaults. Override text is
+                rendered verbatim. The composer flags any number in the
+                override that disagrees with the live placement count.
+              </p>
+              <div className="mt-3 space-y-2">
+                {editableSlots.map((slot) => (
+                  <div key={slot} className="flex flex-col gap-1">
+                    <label
+                      htmlFor={`ov-${slot}`}
+                      className="text-xs font-medium text-[var(--muted)]"
+                    >
+                      {SLOT_LABELS[slot]}
+                    </label>
+                    <input
+                      id={`ov-${slot}`}
+                      type="text"
+                      value={overrides[slot] ?? ""}
+                      onChange={(e) => setOverrideFor(slot, e.target.value)}
+                      disabled={isGenerating}
+                      placeholder="(use theme default)"
+                      className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            </details>
             <button
               ref={generateButtonRef}
               type="submit"
@@ -448,6 +579,40 @@ export default function MazeScratchPage() {
               <dt className="font-medium">Seed</dt>
               <dd className="font-mono">{pdf.seed}</dd>
             </dl>
+            <div className="mt-5 rounded-md border border-[var(--border)] bg-[var(--panel)] p-3">
+              <h3 className="text-sm font-semibold text-[var(--heading)]">
+                Composed objectives
+              </h3>
+              <ul className="mt-2 space-y-1.5 text-sm">
+                {pdf.objectives.map((o, i) => (
+                  <li
+                    key={`${o.slot}-${i}`}
+                    className="flex items-start gap-2"
+                  >
+                    <span
+                      className="mt-0.5 inline-block h-3 w-3 flex-shrink-0 rounded-sm border border-[var(--border)] bg-white"
+                      aria-hidden="true"
+                    />
+                    <span className="flex-1">
+                      <span className="text-xs uppercase tracking-wide text-[var(--muted)]">
+                        {SLOT_LABELS[o.slot]}
+                        {o.isOverride ? " (override)" : ""}
+                      </span>
+                      <br />
+                      <span>{o.text}</span>
+                      {o.countMismatch ? (
+                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                          <span aria-hidden="true">⚠</span>
+                          Override count{" "}
+                          {o.countMismatch.foundInOverride ?? "(none)"} /
+                          maze count {o.countMismatch.expected}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <button
               type="button"
               onClick={triggerDownload}
@@ -469,22 +634,13 @@ export default function MazeScratchPage() {
  * server to 404 when the asset is in a different directory.
  *
  * Maze Hunt v1 always uses entities for bosses (entities/), blocks for
- * collectibles (blocks/), and items only for Pixel Puzzle. We pick the
- * directory based on the canonicalName via a small heuristic plus the
- * convention that block / entity canonicalNames are pre-baked in our seed
- * lists. For simplicity, return all 3 candidates space-separated; the caller
- * fetches the first that responds 200. (We just return the most likely one.)
- *
- * Cleaner alternative: load /items.json and resolve from there. v1 keeps it
- * simple by encoding the convention.
+ * collectibles (blocks/), and items only for Pixel Puzzle.
  */
 function canonicalPath(canonicalName: string): string {
   const slug = canonicalName
     .toLowerCase()
     .replace(/[()]/g, "")
     .replace(/'/g, "");
-  // Convention: bosses/entities live under /entities/, blocks under /blocks/,
-  // items under /items/. v1 themes only reference entities and blocks.
   return resolveCanonicalDir(canonicalName, slug);
 }
 
@@ -505,7 +661,5 @@ const ENTITY_NAMES = new Set([
 
 function resolveCanonicalDir(canonical: string, slug: string): string {
   if (ENTITY_NAMES.has(canonical)) return `/entities/${slug}.png`;
-  // Blocks are guaranteed to ship as 16x16 PNGs under /blocks/ for everything
-  // we ship in maze-hunt-themes.json. The Pixel Puzzle items go under /items/.
   return `/blocks/${slug}.png`;
 }
