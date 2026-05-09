@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { DifficultyBadge } from "@/app/DifficultyBadge";
-import { type GeneratedPuzzle } from "@/app/page";
+import { type GeneratedPuzzle } from "@/app/PixelPuzzlePanel";
 import { computeDifficulty } from "@/lib/difficulty";
 import {
   GRID_N,

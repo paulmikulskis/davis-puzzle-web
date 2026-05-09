@@ -1,9 +1,10 @@
 "use client";
 
-// Epic 1+2+3 scratch page. Drives the full Maze Hunt pipeline (maze +
-// collectibles + assembly + cutouts + objectives + two-up print) end-to-end
-// against the 3 v1 themes. The polished UI lands behind the tab strip in
-// app/page.tsx in Epic 4.
+// Maze Hunt panel — drives the full pipeline (maze + collectibles + assembly
+// + cutouts + objectives + two-up print) end-to-end. Embedded inside the
+// activity tab strip on `/`. Receives an initialThemeId / initialDifficulty
+// from the activity selector when Andrew picks a card. Exits back to the
+// selector via the "Back to themes" button.
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -134,11 +135,26 @@ const SLOT_LABELS: Record<ObjectiveSlot, string> = {
   "state-change": "State change",
 };
 
-export default function MazeScratchPage() {
+export interface MazeHuntPanelProps {
+  initialThemeId?: string;
+  initialDifficulty?: DifficultyPreset;
+  /** Optional callback — invoked when Andrew clicks "Back to themes". */
+  onBackToSelector?: () => void;
+}
+
+export function MazeHuntPanel({
+  initialThemeId,
+  initialDifficulty,
+  onBackToSelector,
+}: MazeHuntPanelProps) {
   const [themes, setThemes] = useState<MazeHuntTheme[]>([]);
   const [catalog, setCatalog] = useState<CatalogFile | null>(null);
-  const [activeThemeId, setActiveThemeId] = useState<string>("end-island");
-  const [difficulty, setDifficulty] = useState<DifficultyPreset>("medium");
+  const [activeThemeId, setActiveThemeId] = useState<string>(
+    initialThemeId ?? "end-island",
+  );
+  const [difficulty, setDifficulty] = useState<DifficultyPreset>(
+    initialDifficulty ?? "medium",
+  );
   const [bwSafe, setBwSafe] = useState(false);
   const [splitOntoTwoPages, setSplitOntoTwoPages] = useState(false);
   const [sessionLabel, setSessionLabel] = useState("");
@@ -398,23 +414,33 @@ export default function MazeScratchPage() {
     "state-change",
   ];
 
+  const activeThemeLabel =
+    themes.find((t) => t.id === activeThemeId)?.displayName ?? "Maze Hunt";
+
   return (
-    <main className="min-h-screen bg-[var(--background)] px-5 py-8 text-[var(--foreground)] sm:px-8">
-      <section className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
-            Maze Hunt — Epic 3 scratch
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold leading-tight text-[var(--heading)]">
-            Two-up worksheet (child + facilitator)
-          </h1>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            Drives the full v1 pipeline: maze + collectibles + assembly +
-            cutouts + objective checklist + two-up Letter portrait print
-            layout (child copy on top half, facilitator answer copy on bottom
-            half). The polished front-door UI lands in Epic 4.
-          </p>
-        </div>
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+      {onBackToSelector ? (
+        <button
+          type="button"
+          onClick={onBackToSelector}
+          className="cursor-pointer self-start text-sm font-medium text-[var(--accent)] hover:underline"
+        >
+          ← Back to themes
+        </button>
+      ) : null}
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+          Maze Hunt
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold leading-tight text-[var(--heading)]">
+          {activeThemeLabel} worksheet
+        </h1>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Generate a printable Letter portrait worksheet — child copy on the
+          top half, facilitator answer key on the bottom half. Adjust theme,
+          difficulty, and per-objective text below before generating.
+        </p>
+      </div>
         <form
           onSubmit={handleSubmit}
           className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm"
@@ -622,8 +648,7 @@ export default function MazeScratchPage() {
             </button>
           </section>
         ) : null}
-      </section>
-    </main>
+    </section>
   );
 }
 
