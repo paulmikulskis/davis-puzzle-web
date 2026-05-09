@@ -41,3 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# local agent/state artifacts (not committed; lives alongside the repo)
+roadmap.json
+roadmap.*.json
+
+# wiki scrape cache for scripts/build-catalog.ts
+/.cache/

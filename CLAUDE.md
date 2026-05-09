@@ -80,10 +80,15 @@ features. They are not incidental implementation details.
 - No auth.
 - No database.
 - No analytics.
-- No server-side PDF generation.
+- No server-side PDF generation. The PDF is built in the browser. The server
+  only fetches wiki bytes and (for the email route) relays the already-built
+  PDF to Resend.
 - No persistent server state.
 - No cache layer.
-- No env vars required by the app.
+- No env vars required by the page itself. The email route reads
+  `RESEND_API_KEY` (required) and `RESEND_FROM_EMAIL` (optional) and degrades
+  to a friendly "unavailable" response when the API key is missing — see
+  Email Delivery Contract below.
 - No custom asset/fonts for PDF rendering.
 - No A4 mode.
 - No 5th page.
@@ -208,6 +213,69 @@ Object URL lifecycle matters:
 
 The server route's only side effect is outbound wiki traffic. It must never
 write files, cache payloads, log user activity, generate PDFs, or persist state.
+
+## Email Delivery Contract
+
+Optional capability. Andrew (or whoever has the page open) can email the
+generated PDF to a single recipient instead of (or in addition to) downloading
+it locally.
+
+Implementation file:
+
+```text
+app/api/send-puzzle-email/route.ts
+```
+
+Route shape:
+
+```text
+POST /api/send-puzzle-email
+Content-Type: application/json
+{
+  "to": "<recipient email>",
+  "itemLabel": "<canonical label, e.g. Cooked Salmon>",
+  "sourceFilename": "<Invicon_*.png>",
+  "pdfBase64": "<PDF bytes, base64>",
+  "note": "<optional, ≤200 chars>"
+}
+```
+
+Rules:
+
+- Runtime is the default Node runtime so the Resend SDK works.
+- `Cache-Control: no-store`.
+- Stateless. Stores nothing. PDF is generated client-side; the route only
+  relays bytes to Resend.
+- Validates: well-formed email, item label ≤ 100 chars, source filename
+  matches `/^Invicon_[A-Za-z0-9_()]+\.png$/`, decoded PDF ≤ 5MB, optional note
+  ≤ 500 chars.
+- Per-IP rate limit: 5 sends/hour, in-memory `Map` keyed by IP. Resets on
+  cold start. Acceptable for v1; upgrade to Upstash if abuse appears.
+- Friendly errors only. Never surface raw API errors to the UI.
+- If `RESEND_API_KEY` is missing, return
+  `{ ok: false, code: "unavailable", message: "Email is temporarily unavailable." }`
+  with status 503 rather than throwing.
+- `RESEND_FROM_EMAIL` defaults to `puzzles@tradecanny.com` if unset.
+
+Doppler:
+
+```text
+org: Yungsten
+project: base
+config: prd
+secrets:
+  RESEND_API_KEY     (required, already set)
+  RESEND_FROM_EMAIL  (optional, default puzzles@tradecanny.com)
+```
+
+Doppler is synced to the Vercel project; setting/updating either secret
+auto-redeploys.
+
+Local dev with the route working:
+
+```bash
+doppler run --project base --config prd -- pnpm dev
+```
 
 ## Wiki Proxy Contract
 

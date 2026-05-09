@@ -30,6 +30,56 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
+}
+
+@keyframes davisFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes davisFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.davis-step-enter {
+  animation: davisFadeIn 180ms ease-out;
+}
+
+.davis-card-enter {
+  animation: davisFadeUp 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .davis-step-enter,
+  .davis-card-enter {
+    animation: none;
+  }
+  .davis-zoomable {
+    transition: none !important;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .davis-zoomable:focus {
+    transform: scale(1.35);
+    z-index: 10;
+    border-color: var(--accent);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  }
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DifficultyBadge } from "@/app/DifficultyBadge";
 import { type GeneratedPuzzle } from "@/app/page";
+import { computeDifficulty } from "@/lib/difficulty";
 import {
   COLUMNS,
   GRID_N,
@@ -23,11 +25,23 @@ const slides = [
   "Color by number",
 ];
 
+type EmailSendState =
+  | { status: "idle" }
+  | { status: "sending" }
+  | { status: "success"; recipient: string }
+  | { status: "error"; message: string };
+
 export function PuzzleVisualizer({
   puzzle,
   onConfirm,
 }: PuzzleVisualizerProps) {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailNote, setEmailNote] = useState("");
+  const [emailState, setEmailState] = useState<EmailSendState>({
+    status: "idle",
+  });
 
   if (!puzzle) {
     return (
@@ -52,30 +66,195 @@ export function PuzzleVisualizer({
   const goNext = () =>
     setActiveSlide((current) => (current === slides.length - 1 ? 0 : current + 1));
 
+  async function handleEmailSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!puzzle) return;
+    const trimmed = emailTo.trim();
+    if (!trimmed) {
+      setEmailState({ status: "error", message: "Enter a recipient email." });
+      return;
+    }
+    setEmailState({ status: "sending" });
+    try {
+      const pdfBase64 = await fetchAsBase64(puzzle.url);
+      const response = await fetch("/api/send-puzzle-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: trimmed,
+          itemLabel: puzzle.itemLabel,
+          sourceFilename: puzzle.sourceFilename,
+          pdfBase64,
+          note: emailNote.trim() || null,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { ok: boolean; message?: string }
+        | null;
+      if (!response.ok || !data?.ok) {
+        setEmailState({
+          status: "error",
+          message:
+            data?.message ?? "Couldn't send the email. Try again in a moment.",
+        });
+        return;
+      }
+      setEmailState({ status: "success", recipient: trimmed });
+      setEmailNote("");
+    } catch {
+      setEmailState({
+        status: "error",
+        message: "Couldn't send the email. Check your connection and try again.",
+      });
+    }
+  }
+
+  function resetEmail() {
+    setEmailOpen(false);
+    setEmailTo("");
+    setEmailNote("");
+    setEmailState({ status: "idle" });
+  }
+
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+    <section className="davis-card-enter rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
             Generated Preview
           </p>
-          <h2 className="mt-1 text-2xl font-semibold text-[var(--heading)]">
-            {puzzle.itemLabel} worksheet set
-          </h2>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <h2 className="text-2xl font-semibold text-[var(--heading)]">
+              {puzzle.itemLabel} worksheet set
+            </h2>
+            <DifficultyBadgeFromPalette palette={puzzle.palette} />
+          </div>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {puzzle.opaqueCellCount} filled cells, {puzzle.colorCount} colors,
             source {puzzle.sourceFilename}.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onConfirm(puzzle.url, puzzle.filename)}
-          className="rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2"
-        >
-          Confirm download
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-2 sm:flex-nowrap">
+          <button
+            type="button"
+            onClick={() => onConfirm(puzzle.url, puzzle.filename)}
+            className="rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2"
+          >
+            Confirm download
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEmailOpen((value) => !value);
+              if (emailState.status === "success") {
+                setEmailState({ status: "idle" });
+              }
+            }}
+            aria-expanded={emailOpen}
+            aria-controls="email-puzzle-form"
+            className="rounded-md border border-[var(--accent)] bg-white px-4 py-3 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2"
+          >
+            {emailOpen ? "Hide email form" : "Email this worksheet"}
+          </button>
+        </div>
       </div>
+
+      {emailOpen ? (
+        <div
+          id="email-puzzle-form"
+          className="mt-4 rounded-md border border-[var(--border)] bg-[var(--panel)] p-4"
+        >
+          {emailState.status === "success" ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-6 text-[var(--heading)]">
+                Sent the worksheet to{" "}
+                <span className="font-semibold">{emailState.recipient}</span>.
+              </p>
+              <button
+                type="button"
+                onClick={resetEmail}
+                className="self-start rounded-md border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] sm:self-auto"
+              >
+                Done
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              <div>
+                <label
+                  htmlFor="email-to"
+                  className="block text-sm font-medium text-[var(--heading)]"
+                >
+                  Send to
+                </label>
+                <input
+                  id="email-to"
+                  name="email-to"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  required
+                  value={emailTo}
+                  onChange={(event) => setEmailTo(event.target.value)}
+                  disabled={emailState.status === "sending"}
+                  placeholder="parent@example.com"
+                  className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:bg-slate-100"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="email-note"
+                  className="block text-sm font-medium text-[var(--heading)]"
+                >
+                  Optional note
+                </label>
+                <textarea
+                  id="email-note"
+                  name="email-note"
+                  value={emailNote}
+                  maxLength={200}
+                  onChange={(event) => setEmailNote(event.target.value)}
+                  disabled={emailState.status === "sending"}
+                  rows={2}
+                  placeholder="A short message for the recipient (optional)."
+                  className="mt-2 w-full resize-y rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm leading-5 outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:bg-slate-100"
+                />
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p
+                  className="min-h-5 text-sm leading-5"
+                  aria-live="polite"
+                  role="status"
+                >
+                  {emailState.status === "sending" ? (
+                    <span className="text-[var(--muted)]">Sending...</span>
+                  ) : emailState.status === "error" ? (
+                    <span className="text-[var(--error)]">{emailState.message}</span>
+                  ) : null}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={resetEmail}
+                    disabled={emailState.status === "sending"}
+                    className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--heading)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={emailState.status === "sending"}
+                    className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  >
+                    {emailState.status === "sending" ? "Sending..." : "Send"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
@@ -114,7 +293,7 @@ export function PuzzleVisualizer({
         </div>
       </div>
 
-      <div className="mt-5 min-h-[420px]">
+      <div key={activeSlide} className="davis-step-enter mt-5 min-h-[420px]">
         {activeSlide === 0 ? <SummarySlide puzzle={puzzle} /> : null}
         {activeSlide === 1 ? <AnswerKeySlide puzzle={puzzle} /> : null}
         {activeSlide === 2 ? <CoordinateSlide puzzle={puzzle} /> : null}
@@ -240,12 +419,16 @@ function MiniDeliverable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-[var(--border)] bg-white p-2">
+    <button
+      type="button"
+      aria-label={`${title} preview — click or focus to enlarge`}
+      className="davis-zoomable group relative rounded-md border border-[var(--border)] bg-white p-2 text-left transition-all duration-200 ease-out hover:z-10 hover:scale-[1.35] hover:border-[var(--accent)] hover:shadow-2xl focus:outline-none focus-visible:z-10 focus-visible:scale-[1.35] focus-visible:border-[var(--accent)] focus-visible:shadow-2xl"
+    >
       <div className="mb-2 text-center text-xs font-semibold text-[var(--muted)]">
         {title}
       </div>
       {children}
-    </div>
+    </button>
   );
 }
 
@@ -439,4 +622,30 @@ function buildNumberMap(palette: PaletteEntry[]): Map<string, number> {
 
 function rgbToCss(rgb: RGB): string {
   return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
+}
+
+function DifficultyBadgeFromPalette({ palette }: { palette: PaletteEntry[] }) {
+  const result = useMemo(() => computeDifficulty(palette), [palette]);
+  return (
+    <DifficultyBadge bucket={result.bucket} explanation={result.explanation} />
+  );
+}
+
+async function fetchAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("unexpected reader result"));
+        return;
+      }
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.readAsDataURL(blob);
+  });
 }

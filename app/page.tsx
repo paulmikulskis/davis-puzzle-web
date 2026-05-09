@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { CatalogBrowser } from "@/app/CatalogBrowser";
 import { PuzzleVisualizer } from "@/app/PuzzleVisualizer";
 import { canonicalize, humanize, puzzleFilename } from "@/lib/canonicalize";
 import { isPuzzleError } from "@/lib/errors";
@@ -33,6 +34,21 @@ export default function Home() {
   const [error, setError] = useState("");
   const [puzzle, setPuzzle] = useState<GeneratedPuzzle | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const generateButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  function handleCatalogPick(canonicalName: string, displayName: string) {
+    setItemName(displayName);
+    setError("");
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        generateButtonRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        generateButtonRef.current?.focus({ preventScroll: true });
+      });
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -121,16 +137,16 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[var(--background)] px-5 py-8 text-[var(--foreground)] sm:px-8">
-      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col justify-between gap-8">
-        <div className="grid gap-8 pt-4 lg:grid-cols-[1fr_360px] lg:items-start">
-          <div className="max-w-2xl">
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col gap-10">
+        <div className="grid gap-8 pt-2 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-10">
+          <div className="order-2 max-w-[34rem] lg:order-1">
             <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
               Minecraft Pixel Puzzle
             </p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight text-[var(--heading)] sm:text-5xl">
+            <h1 className="mt-3 text-3xl font-semibold leading-tight text-[var(--heading)] sm:text-4xl lg:text-[2.75rem]">
               Generate a printable pixel-art worksheet from any Minecraft item.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-[var(--muted)]">
+            <p className="mt-5 text-base leading-7 text-[var(--muted)]">
               Flat items work best: foods, tools, ingots, gems, mob drops,
               plants, and minerals usually make clearer puzzles than block
               icons.
@@ -139,9 +155,9 @@ export default function Home() {
 
           <form
             onSubmit={handleSubmit}
-            className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm"
+            className="order-1 rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm lg:order-2"
           >
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="item-name"
@@ -157,19 +173,21 @@ export default function Home() {
                   onChange={(event) => setItemName(event.target.value)}
                   disabled={isGenerating}
                   placeholder="cooked salmon"
+                  autoComplete="off"
+                  spellCheck={false}
                   className="mt-2 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-base outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:bg-slate-100"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-baseline justify-between gap-4">
                   <label
                     htmlFor="max-colors"
                     className="block text-sm font-medium text-[var(--heading)]"
                   >
                     Max colors
                   </label>
-                  <span className="min-w-8 text-right text-sm font-semibold text-[var(--accent)]">
+                  <span className="tabular-nums text-sm font-semibold text-[var(--accent)]">
                     {maxColors}
                   </span>
                 </div>
@@ -188,6 +206,7 @@ export default function Home() {
               </div>
 
               <button
+                ref={generateButtonRef}
                 type="submit"
                 disabled={isGenerating}
                 className="w-full rounded-md bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400"
@@ -197,7 +216,7 @@ export default function Home() {
             </div>
 
             <div
-              className="mt-5 rounded-md border border-[var(--border)] bg-[var(--panel)] px-3 py-3 text-sm leading-6"
+              className="mt-4 rounded-md border border-[var(--border)] bg-[var(--panel)] px-3 py-3 text-sm leading-6"
               aria-live="polite"
             >
               <p className="font-medium text-[var(--heading)]">{status}</p>
@@ -208,13 +227,15 @@ export default function Home() {
           </form>
         </div>
 
+        <CatalogBrowser onPick={handleCatalogPick} />
+
         <PuzzleVisualizer
           key={puzzle?.id ?? "empty-preview"}
           puzzle={puzzle}
           onConfirm={triggerDownload}
         />
 
-        <footer className="border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
+        <footer className="mt-auto border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
           Unofficial fan-made tool. Textures &copy; Mojang, sourced from
           minecraft.wiki.
         </footer>
